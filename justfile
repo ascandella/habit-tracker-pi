@@ -1,4 +1,4 @@
-PI_ARCH := "armv7-unknown-linux-gnueabihf"
+PI_ARCH := "aarch64-unknown-linux-gnu"
 PI_IP := "10.2.0.25"
 PROJECT_NAME := "workout-tracker-pi"
 
