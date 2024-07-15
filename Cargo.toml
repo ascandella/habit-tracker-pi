@@ -12,3 +12,7 @@ rppal = "0.18.0"
 [dependencies.rusqlite]
 version = "0.31.0"
 features = ["bundled"]
+
+[dependencies.epd-waveshare]
+# TODO: Switch to git once PR for 2in7_v2 is up
+path = "../epd-waveshare"
