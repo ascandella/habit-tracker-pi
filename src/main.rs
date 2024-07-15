@@ -11,8 +11,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let gpio = Gpio::new()?;
     let mut pin = gpio.get(GPIO_BUTTON)?.into_input();
 
-    pin.set_async_interrupt(Trigger::RisingEdge, move |level| {
-        println!("Button pressed: {}", level)
+    pin.set_async_interrupt(Trigger::FallingEdge, move |_level| {
+        println!("Button pressed")
     })
     .expect("Could not set async interrupt on pin.");
 

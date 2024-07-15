@@ -5,5 +5,5 @@ PROJECT_NAME := "workout-tracker-pi"
 build:
 	cross build --release --target {{PI_ARCH}}
 
-copy: build
+copy:
 	scp target/{{PI_ARCH}}/release/{{PROJECT_NAME}} aiden@{{PI_IP}}:/home/aiden/{{PROJECT_NAME}}
