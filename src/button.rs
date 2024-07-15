@@ -38,3 +38,29 @@ impl DebouncedButton {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::mpsc::channel;
+    use std::thread;
+
+    #[test]
+    fn test_debounced_button() {
+        let (tx, rx) = channel();
+        let debounce_duration = Duration::from_millis(15);
+        let mut button = DebouncedButton::new(tx, debounce_duration);
+        // Fire the button press
+        button.pressed();
+        // Should not fire again
+        button.pressed();
+        assert_eq!(rx.try_recv().is_ok(), true);
+        assert_eq!(rx.try_recv().is_err(), true);
+        // Wait for debounce duration
+        thread::sleep(debounce_duration);
+        // Should fire again
+        button.pressed();
+        assert_eq!(rx.try_recv().is_ok(), true);
+        assert_eq!(rx.try_recv().is_err(), true);
+    }
+}
