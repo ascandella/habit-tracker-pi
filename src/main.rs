@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut button = DebouncedButton::new(button_tx, Duration::from_millis(500));
 
     pin.set_async_interrupt(Trigger::FallingEdge, move |_| button.pressed())
-        .expect("Could not set async interrupt on pin.");
+        .expect("Could not set async interrupt on pin");
 
     ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel."))
         .expect("Error setting Ctrl-C handler");
