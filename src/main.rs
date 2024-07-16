@@ -15,7 +15,7 @@ use display::Display;
 const GPIO_BUTTON: u8 = 26;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // let (exit_tx, exit_rx) = channel();
+    let (exit_tx, exit_rx) = channel();
     let (button_tx, button_rx) = channel();
     let gpio = Gpio::new()?;
     let mut pin = gpio.get(GPIO_BUTTON)?.into_input();
@@ -25,8 +25,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     pin.set_async_interrupt(Trigger::FallingEdge, move |_| button.pressed())
         .expect("Could not set async interrupt on pin");
 
-    // ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel."))
-    //     .expect("Error setting Ctrl-C handler");
+    ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel."))
+        .expect("Error setting Ctrl-C handler");
 
     thread::spawn(move || loop {
         if let Ok(_) = button_rx.recv() {
@@ -35,14 +35,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     let mut display = Display::new();
-    display.text("Hello, world", 40, 40);
+    display.text("Hello, world", display.height() / 2, display.width() / 2);
     display.sleep().expect("Unable to sleep");
 
-    thread::sleep(Duration::from_secs(5));
-    // exit_rx.recv().expect("Could not receive from channel.");
+    exit_rx.recv().expect("Could not receive from channel.");
     println!("Received control-c. Exiting...");
+
     display.wake_up();
-    display.text("Good-bye", 10, 10);
+    display.clear();
+    display.text("Good-bye", display.height() / 2, 10);
+
+    // *Always* sleep before exiting the program
     display.sleep().expect("Unable to sleep");
 
     Ok(())

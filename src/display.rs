@@ -1,8 +1,7 @@
 use embedded_graphics::{
     mono_font::MonoTextStyleBuilder,
     prelude::*,
-    primitives::{Line, PrimitiveStyleBuilder},
-    text::{Baseline, Text, TextStyleBuilder},
+    text::{Alignment, Baseline, Text, TextStyleBuilder},
 };
 use embedded_hal::digital::PinState;
 use epd_waveshare::{
@@ -13,7 +12,6 @@ use epd_waveshare::{
 };
 use gpiocdev_embedded_hal::{InputPin, OutputPin};
 use linux_embedded_hal::{
-    gpio_cdev::{Chip, LineHandle, LineRequestFlags},
     spidev::{self, SpidevOptions},
     Delay, SPIError, SpidevDevice,
 };
@@ -50,7 +48,7 @@ impl Display {
             Epd2in7::new(&mut spi, busy, dc, rst, &mut delay, None).expect("eink initalize error");
         let mut display = Display2in7::default();
         display.set_rotation(DisplayRotation::Rotate90);
-        // display.clear();
+        display.clear(Color::White).expect("clear screen");
 
         Self {
             display,
@@ -60,35 +58,35 @@ impl Display {
         }
     }
 
-    pub fn text(&mut self, text: &str, x: i32, y: i32) {
+    pub fn height(&self) -> u32 {
+        self.device.height()
+    }
+
+    pub fn width(&self) -> u32 {
+        self.device.width()
+    }
+
+    pub fn text(&mut self, text: &str, x: u32, y: u32) {
+        let x = x.try_into().expect("x out of bounds");
+        let y = y.try_into().expect("y out of bounds");
         let style = MonoTextStyleBuilder::new()
-            .font(&embedded_graphics::mono_font::ascii::FONT_6X10)
+            .font(&profont::PROFONT_24_POINT)
             .text_color(Color::Black)
             .background_color(Color::White)
             .build();
 
-        let text_style = TextStyleBuilder::new().baseline(Baseline::Top).build();
-
-        // Infallible
-        let resp = Text::with_text_style(text, Point::new(x, y), style, text_style)
-            .draw(&mut self.display);
-        println!("Text response {:?}", resp);
-
-        let style = PrimitiveStyleBuilder::new()
-            .stroke_color(Color::Black)
-            .stroke_width(1)
+        let text_style = TextStyleBuilder::new()
+            .baseline(Baseline::Middle)
+            .alignment(Alignment::Center)
             .build();
 
-        let _ = Line::new(Point::new(64, 64), Point::new(80, 80))
-            .into_styled(style)
+        // Infallible
+        let _ = Text::with_text_style(text, Point::new(x, y), style, text_style)
             .draw(&mut self.display);
 
         self.device
-            .update_frame(&mut self.spi, self.display.buffer(), &mut self.delay)
-            .expect("Update frame error");
-        self.device
-            .display_frame(&mut self.spi, &mut self.delay)
-            .expect("Display frame error");
+            .update_and_display_frame(&mut self.spi, self.display.buffer(), &mut self.delay)
+            .expect("Update and display frame error");
     }
 
     pub fn clear(&mut self) {
