@@ -3,8 +3,6 @@ use gpiocdev::line::EdgeDetection;
 use std::error::Error;
 use std::time::Duration;
 
-use ctrlc;
-
 mod button;
 use button::DebouncedButton;
 
@@ -35,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
-    ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel."))
+    ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel"))
         .expect("Error setting Ctrl-C handler");
 
     let mut display = Display::new(GPIO_CHIP);

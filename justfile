@@ -10,3 +10,6 @@ test:
 
 copy:
 	scp target/{{PI_ARCH}}/debug/{{PROJECT_NAME}} aiden@{{PI_IP}}:/home/aiden/{{PROJECT_NAME}}
+
+clippy:
+	cross clippy --target {{PI_ARCH}}
