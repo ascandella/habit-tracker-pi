@@ -1,6 +1,5 @@
+use crossbeam_channel::{select, unbounded};
 use std::error::Error;
-use std::sync::mpsc::channel;
-use std::thread;
 use std::time::Duration;
 
 use ctrlc;
@@ -15,8 +14,8 @@ use display::Display;
 const GPIO_BUTTON: u8 = 26;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let (exit_tx, exit_rx) = channel();
-    let (button_tx, button_rx) = channel();
+    let (exit_tx, exit_rx) = unbounded();
+    let (button_tx, button_rx) = unbounded();
     let gpio = Gpio::new()?;
     let mut pin = gpio.get(GPIO_BUTTON)?.into_input();
 
@@ -28,18 +27,28 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel."))
         .expect("Error setting Ctrl-C handler");
 
-    thread::spawn(move || loop {
-        if let Ok(_) = button_rx.recv() {
-            println!("Button pressed!");
-        }
-    });
-
     let mut display = Display::new();
     display.text("Hello, world", display.height() / 2, display.width() / 2);
-    display.sleep().expect("Unable to sleep");
 
-    exit_rx.recv().expect("Could not receive from channel.");
-    println!("Received control-c. Exiting...");
+    let mut running = true;
+    let mut presses = 0;
+    while running {
+        select! {
+            recv(button_rx) -> _ => {
+                println!("Button pressed");
+                presses += 1;
+                display.wake_up();
+                display.clear();
+                display.text(format!("Presses: {}", presses).as_str(), display.height() / 2, display.width() / 2);
+                display.sleep().expect("Unable to sleep");
+
+            }
+            recv(exit_rx) -> _ => {
+                println!("Received control-c. Exiting...");
+                running = false;
+            }
+        }
+    }
 
     display.wake_up();
     display.clear_and_shutdown();

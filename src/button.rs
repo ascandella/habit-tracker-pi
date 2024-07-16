@@ -1,7 +1,9 @@
 use std::{
-    sync::{mpsc::Sender, Mutex},
+    sync::Mutex,
     time::{Duration, SystemTime},
 };
+
+use crossbeam_channel::Sender;
 
 pub(crate) struct DebouncedButton {
     tx: Sender<()>,
