@@ -34,10 +34,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
-    let _display = Display::new();
+    let mut display = Display::new();
+    display.text("Hello, world", 0, 0);
+    display.sleep().expect("Unable to sleep");
 
     exit_rx.recv().expect("Could not receive from channel.");
     println!("Received control-c. Exiting...");
+    display.text("Good-bye", 10, 10);
+    display.sleep().expect("Unable to sleep");
 
     Ok(())
 }

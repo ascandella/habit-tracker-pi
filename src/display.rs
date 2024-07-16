@@ -1,7 +1,6 @@
 use embedded_graphics::{
     mono_font::MonoTextStyleBuilder,
     prelude::*,
-    primitives::{Circle, Line, PrimitiveStyle},
     text::{Baseline, Text, TextStyleBuilder},
 };
 use epd_waveshare::{
@@ -70,6 +69,20 @@ impl Display {
             delay,
             device: epd2in7,
         }
+    }
+
+    pub fn text(&mut self, text: &str, x: i32, y: i32) {
+        let style = MonoTextStyleBuilder::new()
+            .font(&embedded_graphics::mono_font::ascii::FONT_6X10)
+            .text_color(Color::White)
+            .background_color(Color::Black)
+            .build();
+
+        let text_style = TextStyleBuilder::new().baseline(Baseline::Top).build();
+
+        // Infallible
+        let _ = Text::with_text_style(text, Point::new(x, y), style, text_style)
+            .draw(&mut self.display);
     }
 
     pub fn sleep(&mut self) -> Result<(), SPIError> {
