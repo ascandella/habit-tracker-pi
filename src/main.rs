@@ -12,6 +12,8 @@ mod display;
 use display::Display;
 
 const GPIO_BUTTON: u8 = 26;
+// Raspberry pi default GPIO cdev
+const GPIO_CHIP: &str = "/dev/gpiochip0";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let (exit_tx, exit_rx) = unbounded();
@@ -27,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel."))
         .expect("Error setting Ctrl-C handler");
 
-    let mut display = Display::new();
+    let mut display = Display::new(GPIO_CHIP);
     display.text("Hello, world", display.height() / 2, display.width() / 2);
 
     let mut running = true;
