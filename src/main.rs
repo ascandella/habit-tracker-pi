@@ -28,7 +28,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     std::thread::spawn(move || {
         for event in pin_req.edge_events() {
-            println!("Button event: {:?}", event);
             button.pressed();
         }
     });
@@ -44,7 +43,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     while running {
         select! {
             recv(button_rx) -> _ => {
-                println!("Button pressed");
                 presses += 1;
                 display.wake_up();
                 display.clear();
