@@ -9,6 +9,9 @@ use rppal::gpio::{Gpio, Trigger};
 mod button;
 use button::DebouncedButton;
 
+mod display;
+use display::Display;
+
 const GPIO_BUTTON: u8 = 26;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -30,6 +33,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             println!("Button pressed!");
         }
     });
+
+    let _display = Display::new();
 
     exit_rx.recv().expect("Could not receive from channel.");
     println!("Received control-c. Exiting...");
