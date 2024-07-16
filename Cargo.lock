@@ -180,6 +180,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpiocdev"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5119c89eccee09c4f6e9ca2b112aea1cd80bac31cd29169f171a48ae5552d1c"
+dependencies = [
+ "gpiocdev-uapi",
+ "thiserror",
+]
+
+[[package]]
+name = "gpiocdev-embedded-hal"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26476d24320fe1b9ebc76392f984abe4a6147844c7e5a69538318f15b026cca8"
+dependencies = [
+ "embedded-hal",
+ "gpiocdev",
+ "thiserror",
+]
+
+[[package]]
+name = "gpiocdev-uapi"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a02357253f833a6ce4e93f17e8dd3e169c941ea71b83d442ed9c55f784045204"
+dependencies = [
+ "bitflags 2.6.0",
+ "ioctl-sys",
+ "libc",
+ "thiserror",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -218,6 +251,12 @@ dependencies = [
  "core-foundation-sys",
  "mach2",
 ]
+
+[[package]]
+name = "ioctl-sys"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8bd11f3a29434026f5ff98c730b668ba74b1033637b8817940b54d040696133c"
 
 [[package]]
 name = "libc"
@@ -656,6 +695,7 @@ dependencies = [
  "embedded-graphics",
  "embedded-hal",
  "epd-waveshare",
+ "gpiocdev-embedded-hal",
  "linux-embedded-hal",
  "rppal",
  "rusqlite",
