@@ -93,6 +93,17 @@ impl Display {
         self.display.clear(Color::White).expect("Infallible clear");
     }
 
+    pub fn clear_and_shutdown(&mut self) {
+        self.clear();
+        self.device
+            .clear_frame(&mut self.spi, &mut self.delay)
+            .expect("Unable to clear frame");
+        self.device
+            .display_frame(&mut self.spi, &mut self.delay)
+            .expect("Unable to display cleared frame");
+        self.sleep().expect("Unable to sleep");
+    }
+
     pub fn wake_up(&mut self) {
         self.device
             .wake_up(&mut self.spi, &mut self.delay)

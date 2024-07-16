@@ -42,11 +42,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Received control-c. Exiting...");
 
     display.wake_up();
-    display.clear();
-    display.text("Good-bye", display.height() / 2, 10);
-
-    // *Always* sleep before exiting the program
-    display.sleep().expect("Unable to sleep");
+    display.clear_and_shutdown();
 
     Ok(())
 }
