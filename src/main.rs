@@ -14,7 +14,7 @@ const GPIO_BUTTON: u32 = 26;
 const GPIO_CHIP: &str = "/dev/gpiochip0";
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let (exit_tx, exit_rx) = unbounded();
+    let (exit_tx, exit_rx) = bounded(1);
     let (button_tx, button_rx) = bounded(1);
     let pin_req = gpiocdev::Request::builder()
         .on_chip(GPIO_CHIP)
