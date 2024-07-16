@@ -10,10 +10,10 @@ crossbeam-channel = "0.5.13"
 ctrlc = "3.4"
 embedded-graphics = "0.8.1"
 embedded-hal = "1.0.0"
+gpiocdev = "0.7.1"
 gpiocdev-embedded-hal = "0.1.1"
 linux-embedded-hal = "0.4.0"
 profont = "0.7.0"
-rppal = "0.18.0"
 
 [dependencies.rusqlite]
 version = "0.31.0"

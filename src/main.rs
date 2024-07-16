@@ -1,9 +1,9 @@
-use crossbeam_channel::{select, unbounded};
+use crossbeam_channel::{bounded, select, unbounded};
+use gpiocdev::line::EdgeDetection;
 use std::error::Error;
 use std::time::Duration;
 
 use ctrlc;
-use rppal::gpio::{Gpio, Trigger};
 
 mod button;
 use button::DebouncedButton;
@@ -11,20 +11,29 @@ use button::DebouncedButton;
 mod display;
 use display::Display;
 
-const GPIO_BUTTON: u8 = 26;
+const GPIO_BUTTON: u32 = 26;
 // Raspberry pi default GPIO cdev
 const GPIO_CHIP: &str = "/dev/gpiochip0";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let (exit_tx, exit_rx) = unbounded();
-    let (button_tx, button_rx) = unbounded();
-    let gpio = Gpio::new()?;
-    let mut pin = gpio.get(GPIO_BUTTON)?.into_input();
+    let (button_tx, button_rx) = bounded(1);
+    let pin_req = gpiocdev::Request::builder()
+        .on_chip(GPIO_CHIP)
+        .with_consumer("workout tracker")
+        .with_line(GPIO_BUTTON)
+        .with_edge_detection(EdgeDetection::FallingEdge)
+        .request()
+        .expect("GPIO button request");
 
     let mut button = DebouncedButton::new(button_tx, Duration::from_millis(500));
 
-    pin.set_async_interrupt(Trigger::FallingEdge, move |_| button.pressed())
-        .expect("Could not set async interrupt on pin");
+    std::thread::spawn(move || {
+        for event in pin_req.edge_events() {
+            println!("Button event: {:?}", event);
+            button.pressed();
+        }
+    });
 
     ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel."))
         .expect("Error setting Ctrl-C handler");

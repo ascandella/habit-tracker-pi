@@ -486,15 +486,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a66a03ae7c801facd77a29370b4faec201768915ac14a721ba36f20bc9c209b"
 
 [[package]]
-name = "rppal"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae44db779bd0898047804d22b662a9dc533b142c077b3f7e36003f658835c5b9"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "rusqlite"
 version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -720,10 +711,10 @@ dependencies = [
  "embedded-graphics",
  "embedded-hal",
  "epd-waveshare",
+ "gpiocdev",
  "gpiocdev-embedded-hal",
  "linux-embedded-hal",
  "profont",
- "rppal",
  "rusqlite",
 ]
 
