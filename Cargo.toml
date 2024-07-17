@@ -20,5 +20,5 @@ version = "0.31.0"
 features = ["bundled"]
 
 [dependencies.epd-waveshare]
-# TODO: Switch to git once PR for 2in7_v2 is up
-path = "../epd-waveshare"
+git = "https://github.com/ascandella/epd-waveshare.git"
+branch = "add-2in7-v2"
