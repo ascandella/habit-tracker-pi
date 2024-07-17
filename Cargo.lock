@@ -156,6 +156,7 @@ dependencies = [
 [[package]]
 name = "epd-waveshare"
 version = "0.5.0"
+source = "git+https://github.com/ascandella/epd-waveshare.git?branch=add-2in7-v2#23ad13aad910e911548fdf041aabe6d183a0bacd"
 dependencies = [
  "bit_field",
  "embedded-graphics-core",
