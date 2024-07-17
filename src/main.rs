@@ -37,6 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut display = Display::new(GPIO_CHIP);
     display.text("Hello, world", display.height() / 2, display.width() / 2);
+    display.sleep()?;
 
     let mut running = true;
     let mut presses = 0;
