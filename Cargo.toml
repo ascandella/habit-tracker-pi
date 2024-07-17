@@ -14,6 +14,7 @@ gpiocdev = "0.7.1"
 gpiocdev-embedded-hal = "0.1.1"
 linux-embedded-hal = "0.4.0"
 profont = "0.7.0"
+rusqlite_migration = "1.2.0"
 
 [dependencies.rusqlite]
 version = "0.31.0"
