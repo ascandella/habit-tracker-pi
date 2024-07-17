@@ -3,16 +3,14 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use crossbeam_channel::Sender;
-
 pub(crate) struct DebouncedButton {
-    tx: Sender<()>,
+    tx: crossbeam_channel::Sender<()>,
     duration: Duration,
     last_press: Mutex<Option<SystemTime>>,
 }
 
 impl DebouncedButton {
-    pub fn new(tx: Sender<()>, debounce_duration: Duration) -> DebouncedButton {
+    pub fn new(tx: crossbeam_channel::Sender<()>, debounce_duration: Duration) -> DebouncedButton {
         DebouncedButton {
             tx,
             duration: debounce_duration,
@@ -44,12 +42,11 @@ impl DebouncedButton {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::mpsc::channel;
     use std::thread;
 
     #[test]
     fn test_debounced_button() {
-        let (tx, rx) = channel();
+        let (tx, rx) = crossbeam_channel::bounded(1);
         let debounce_duration = Duration::from_millis(15);
         let mut button = DebouncedButton::new(tx, debounce_duration);
         // Fire the button press
