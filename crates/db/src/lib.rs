@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use thiserror::Error;
 
 pub(crate) mod migrations;
@@ -16,12 +18,29 @@ pub fn in_memory() -> Result<(), DbError> {
     Ok(())
 }
 
+pub fn open_file(path: impl AsRef<Path>) -> Result<(), DbError> {
+    let mut conn = rusqlite::Connection::open(path)?;
+
+    // Apply some PRAGMA, often better to do it outside of migrations
+    conn.pragma_update_and_check(None, "journal_mode", &"WAL", |_| Ok(()))?;
+
+    migrations::migrate(&mut conn)?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile;
 
     #[test]
     fn test_in_memory() {
         assert!(in_memory().is_ok());
+    }
+
+    #[test]
+    fn test_open_file() {
+        let file = tempfile::NamedTempFile::new().expect("create temp file");
+        assert!(open_file(file.path()).is_ok());
     }
 }

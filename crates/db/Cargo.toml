@@ -10,3 +10,6 @@ rusqlite_migration = "1.2.0"
 [dependencies.rusqlite]
 version = "0.31.0"
 features = ["bundled"]
+
+[dev-dependencies]
+tempfile = { workspace = true }
