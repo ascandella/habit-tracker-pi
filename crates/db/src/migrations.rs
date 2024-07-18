@@ -2,7 +2,13 @@ use rusqlite::Connection;
 use rusqlite_migration::{Migrations, M};
 
 pub(crate) fn migrate(conn: &mut Connection) -> rusqlite_migration::Result<()> {
-    let migrations = Migrations::new(vec![M::up("CREATE TABLE test (id TEXT NOT NULL);")]);
+    let migrations = Migrations::new(vec![M::up(
+        r#"CREATE TABLE events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );"#,
+    )
+    .down("DROP TABLE events;")]);
     migrations.to_latest(conn)
 }
 

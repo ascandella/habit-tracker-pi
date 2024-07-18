@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+chrono = { workspace = true }
 thiserror = { workspace = true }
 rusqlite_migration = "1.2.0"
 
