@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+thiserror = { workspace = true }
 rusqlite_migration = "1.2.0"
-thiserror = "1.0.63"
 
 [dependencies.rusqlite]
 version = "0.31.0"
