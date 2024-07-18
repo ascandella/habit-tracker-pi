@@ -12,20 +12,20 @@ pub enum DbError {
     MigrationError(#[from] rusqlite_migration::Error),
 }
 
-pub fn in_memory() -> Result<(), DbError> {
+pub fn in_memory() -> Result<rusqlite::Connection, DbError> {
     let mut conn = rusqlite::Connection::open_in_memory()?;
     migrations::migrate(&mut conn)?;
-    Ok(())
+    Ok(conn)
 }
 
-pub fn open_file(path: impl AsRef<Path>) -> Result<(), DbError> {
+pub fn open_file(path: impl AsRef<Path>) -> Result<rusqlite::Connection, DbError> {
     let mut conn = rusqlite::Connection::open(path)?;
 
     // Apply some PRAGMA, often better to do it outside of migrations
     conn.pragma_update_and_check(None, "journal_mode", &"WAL", |_| Ok(()))?;
 
     migrations::migrate(&mut conn)?;
-    Ok(())
+    Ok(conn)
 }
 
 #[cfg(test)]
