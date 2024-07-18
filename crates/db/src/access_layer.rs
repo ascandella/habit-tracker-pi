@@ -16,9 +16,16 @@ impl AccessLayer {
     pub fn record_event(&self) -> Result<(), DataAccessError> {
         let now = std::time::SystemTime::now();
         let now: chrono::DateTime<chrono::Utc> = now.into();
+        self.record_event_at(now)
+    }
+
+    pub(crate) fn record_event_at(
+        &self,
+        time: chrono::DateTime<chrono::Utc>,
+    ) -> Result<(), DataAccessError> {
         self.conn.execute(
             "INSERT INTO events (timestamp) VALUES (?1)",
-            [now.to_rfc3339_opts(chrono::SecondsFormat::Millis, false)],
+            [time.to_rfc3339_opts(chrono::SecondsFormat::Millis, false)],
         )?;
         Ok(())
     }
