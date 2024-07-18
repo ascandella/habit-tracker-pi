@@ -115,6 +115,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "db"
+version = "0.1.0"
+dependencies = [
+ "rusqlite",
+ "rusqlite_migration",
+]
+
+[[package]]
 name = "embedded-graphics"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -226,6 +234,23 @@ dependencies = [
  "ioctl-sys",
  "libc",
  "thiserror",
+]
+
+[[package]]
+name = "habit-tracker"
+version = "0.1.0"
+dependencies = [
+ "crossbeam-channel",
+ "ctrlc",
+ "db",
+ "embedded-graphics",
+ "embedded-hal",
+ "epd-waveshare",
+ "gpiocdev",
+ "gpiocdev-embedded-hal",
+ "linux-embedded-hal",
+ "profont",
+ "rusqlite_migration",
 ]
 
 [[package]]
@@ -718,23 +743,6 @@ name = "windows_x86_64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
-
-[[package]]
-name = "workout-tracker-pi"
-version = "0.1.0"
-dependencies = [
- "crossbeam-channel",
- "ctrlc",
- "embedded-graphics",
- "embedded-hal",
- "epd-waveshare",
- "gpiocdev",
- "gpiocdev-embedded-hal",
- "linux-embedded-hal",
- "profont",
- "rusqlite",
- "rusqlite_migration",
-]
 
 [[package]]
 name = "zerocopy"
