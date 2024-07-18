@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_debounced_button() {
-        let (tx, rx) = crossbeam_channel::bounded(1);
+        let (tx, rx) = crossbeam_channel::bounded(5);
         let debounce_duration = Duration::from_millis(5);
         let mut button = DebouncedButton::new(tx, debounce_duration);
         // Fire the button press
