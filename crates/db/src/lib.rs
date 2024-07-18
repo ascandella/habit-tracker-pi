@@ -4,7 +4,7 @@ use thiserror::Error;
 
 pub(crate) mod access_layer;
 pub(crate) mod migrations;
-pub use access_layer::AccessLayer;
+pub use access_layer::{AccessLayer, DataAccessError};
 
 #[derive(Error, Debug)]
 pub enum DbError {
@@ -12,6 +12,8 @@ pub enum DbError {
     SqliteError(#[from] rusqlite::Error),
     #[error("migration error")]
     MigrationError(#[from] rusqlite_migration::Error),
+    #[error("data access error")]
+    DataAccessError(#[from] DataAccessError),
 }
 
 pub fn in_memory() -> Result<AccessLayer, DbError> {
