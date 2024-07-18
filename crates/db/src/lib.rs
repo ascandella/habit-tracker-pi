@@ -12,8 +12,6 @@ pub enum DbError {
     SqliteError(#[from] rusqlite::Error),
     #[error("migration error")]
     MigrationError(#[from] rusqlite_migration::Error),
-    #[error("data access error")]
-    DataAccessError(#[from] DataAccessError),
 }
 
 pub fn in_memory() -> Result<AccessLayer, DbError> {
