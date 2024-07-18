@@ -6,6 +6,15 @@ pub struct AccessLayer {
 pub enum DataAccessError {
     #[error("sqlite error")]
     SqliteError(#[from] rusqlite::Error),
+    #[error("parse date error")]
+    ParseDateError(#[from] chrono::ParseError),
+}
+
+pub struct Streak {
+    start: chrono::DateTime<chrono::Utc>,
+    count: usize,
+    times: Vec<chrono::DateTime<chrono::Utc>>,
+    end: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl AccessLayer {
@@ -27,6 +36,32 @@ impl AccessLayer {
             "INSERT INTO events (timestamp) VALUES (?1)",
             [time.to_rfc3339_opts(chrono::SecondsFormat::Millis, false)],
         )?;
+        Ok(())
+    }
+
+    pub fn current_streak(&self, timezone: impl chrono::TimeZone) -> Result<(), DataAccessError> {
+        let fetch_size: u32 = 10;
+        let mut streak_alive = true;
+        let mut streak_end: Option<chrono::DateTime<chrono::Utc>> = None;
+
+        while streak_alive {
+            // Return the current streak, based on querying the events table
+            let mut stmt = self
+                .conn
+                .prepare("SELECT * timestamp FROM events ORDER BY timestamp DESC LIMIT ?1")?;
+            let rows = stmt
+                .query_map([fetch_size], |row| {
+                    let timestamp: String = row.get(0)?;
+                    Ok(timestamp)
+                })?
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .map(|timestamp| {
+                    let res = chrono::DateTime::parse_from_rfc3339(&timestamp)?;
+                    Ok::<_, chrono::ParseError>(chrono::DateTime::<chrono::Utc>::from(res))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+        }
         Ok(())
     }
 }
