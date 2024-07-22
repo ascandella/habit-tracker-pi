@@ -8,8 +8,6 @@ pub enum DataAccessError {
     SqliteError(#[from] rusqlite::Error),
     #[error("parse date error")]
     ParseDateError(#[from] chrono::ParseError),
-    #[error("timestamp parse error")]
-    TimestampParseError(String),
 }
 
 pub enum StreakData {
@@ -42,12 +40,16 @@ impl Streak {
         self.times.len()
     }
 
-    pub fn start(&self) -> Option<&chrono::DateTime<chrono::Utc>> {
-        self.times.last()
+    pub fn start(&self) -> &chrono::DateTime<chrono::Utc> {
+        self.times
+            .last()
+            .expect("invariant violation: times must be non-empty")
     }
 
-    pub fn end(&self) -> Option<&chrono::DateTime<chrono::Utc>> {
-        self.times.first()
+    pub fn end(&self) -> &chrono::DateTime<chrono::Utc> {
+        self.times
+            .first()
+            .expect("invariant violation: times must be non-empty")
     }
 }
 
@@ -205,14 +207,8 @@ mod tests {
         match streak {
             StreakData::Streak(streak) => {
                 assert_eq!(streak.len(), 1);
-                assert_eq!(
-                    streak.start().unwrap().date_naive(),
-                    chrono::Utc::now().date_naive()
-                );
-                assert_eq!(
-                    streak.end().unwrap().date_naive(),
-                    chrono::Utc::now().date_naive()
-                );
+                assert_eq!(streak.start().date_naive(), chrono::Utc::now().date_naive());
+                assert_eq!(streak.end().date_naive(), chrono::Utc::now().date_naive());
             }
             _ => panic!("expected streak"),
         }
@@ -240,9 +236,9 @@ mod tests {
         match streak {
             StreakData::Streak(streak) => {
                 assert_eq!(streak.len(), 2);
-                assert_eq!(streak.end().unwrap().date_naive(), now.date_naive());
+                assert_eq!(streak.end().date_naive(), now.date_naive());
                 assert_eq!(
-                    streak.start().unwrap().date_naive(),
+                    streak.start().date_naive(),
                     (now - chrono::Duration::days(1)).date_naive(),
                 );
             }
