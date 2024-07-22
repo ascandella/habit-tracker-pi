@@ -23,4 +23,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         name: Clippy lint
         with:
-          command: clippy
+          command: clippy --no-deps
