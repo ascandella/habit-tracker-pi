@@ -108,7 +108,7 @@ fn is_previous_or_same_day(
 ) -> bool {
     let first = first.with_timezone(timezone).date_naive();
     let second = second.with_timezone(timezone).date_naive();
-    first == second || ((first - second).abs() == chrono::TimeDelta::days(1))
+    (first - second).abs() <= chrono::TimeDelta::days(1)
 }
 
 fn sqlite_datetime(time: &chrono::DateTime<chrono::Utc>) -> String {
