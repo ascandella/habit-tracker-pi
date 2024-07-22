@@ -16,9 +16,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         
       - uses: actions-rs/cargo@v1
+        name: Unit tests
         with:
           command: test
 
       - uses: actions-rs/cargo@v1
+        name: Clippy lint
         with:
           command: clippy
