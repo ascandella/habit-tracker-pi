@@ -9,18 +9,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+        shell: bash
           
       - uses: Swatinem/rust-cache@v2
         
-      - uses: actions-rs/cargo@v1
-        name: Unit tests
-        with:
-          command: test
+      - name: Unit tests
+        run: |
+          cargo test
 
-      - uses: actions-rs/cargo@v1
-        name: Clippy lint
-        with:
-          command: clippy --no-deps
+      - name: Clippy lint
+        run: |
+          cargo clippy --no-deps
