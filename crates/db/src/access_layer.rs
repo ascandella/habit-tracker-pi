@@ -275,5 +275,21 @@ mod tests {
             &beginning_of_previous_day_utc,
             &dt
         ));
+
+        let eod_pacific = chrono::Utc
+            .with_ymd_and_hms(2024, 7, 22, 0, 59, 59)
+            .unwrap();
+        let soprevious_pacific = chrono::Utc.with_ymd_and_hms(2024, 7, 20, 8, 0, 0).unwrap();
+
+        assert!(is_previous_or_same_day(
+            &timezone,
+            &eod_pacific,
+            &soprevious_pacific,
+        ));
+        assert!(!is_previous_or_same_day(
+            &chrono::Utc,
+            &eod_pacific,
+            &soprevious_pacific,
+        ));
     }
 }
