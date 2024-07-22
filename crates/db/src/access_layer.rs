@@ -1,3 +1,5 @@
+use crate::streak::StreakData;
+
 pub struct AccessLayer {
     conn: rusqlite::Connection,
 }
@@ -10,51 +12,6 @@ pub enum DataAccessError {
     ParseDateError(#[from] chrono::ParseError),
 }
 
-pub enum StreakData {
-    NoData,
-    Streak(Streak),
-}
-
-impl From<Vec<chrono::DateTime<chrono::Utc>>> for StreakData {
-    fn from(times: Vec<chrono::DateTime<chrono::Utc>>) -> Self {
-        if times.is_empty() {
-            StreakData::NoData
-        } else {
-            StreakData::Streak(Streak::new(times))
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Streak {
-    // Stored in reverse order, where the first element of the list has the newest (most
-    // recent) date of the streak. The last element will be the end of the streak.
-    times: Vec<chrono::DateTime<chrono::Utc>>,
-}
-
-impl Streak {
-    fn new(times: Vec<chrono::DateTime<chrono::Utc>>) -> Self {
-        assert!(!times.is_empty());
-        Self { times }
-    }
-
-    pub fn len(&self) -> usize {
-        self.times.len()
-    }
-
-    pub fn start(&self) -> &chrono::DateTime<chrono::Utc> {
-        self.times
-            .last()
-            .expect("invariant violation: times must be non-empty")
-    }
-
-    pub fn end(&self) -> &chrono::DateTime<chrono::Utc> {
-        self.times
-            .first()
-            .expect("invariant violation: times must be non-empty")
-    }
-}
-
 const FETCH_SIZE: usize = 100;
 
 impl AccessLayer {
@@ -63,8 +20,7 @@ impl AccessLayer {
     }
 
     pub fn record_event(&self) -> Result<(), DataAccessError> {
-        let now = std::time::SystemTime::now();
-        let now: chrono::DateTime<chrono::Utc> = now.into();
+        let now: chrono::DateTime<chrono::Utc> = chrono::Utc::now();
         self.record_event_at(&now)
     }
 
@@ -85,8 +41,8 @@ impl AccessLayer {
     ) -> Result<StreakData, DataAccessError> {
         // In case an event was just recorded, we use exclusive date boundaries
         // in our streak comparison and millisecond precision.
-        let now = chrono::Utc::now() + chrono::Duration::seconds(1);
-        self.streak_from_time(timezone, &now)
+        let upper_bound = chrono::Utc::now() + chrono::Duration::seconds(1);
+        self.streak_from_time(timezone, &upper_bound)
     }
 
     fn streak_from_time(

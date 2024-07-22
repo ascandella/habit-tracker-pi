@@ -4,6 +4,7 @@ use thiserror::Error;
 
 pub(crate) mod access_layer;
 pub(crate) mod migrations;
+mod streak;
 pub use access_layer::{AccessLayer, DataAccessError};
 
 #[derive(Error, Debug)]
