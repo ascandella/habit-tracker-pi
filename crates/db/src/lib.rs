@@ -24,7 +24,7 @@ pub fn open_file(path: impl AsRef<Path>) -> Result<AccessLayer, DbError> {
     let mut conn = rusqlite::Connection::open(path)?;
 
     // Apply some PRAGMA, often better to do it outside of migrations
-    conn.pragma_update_and_check(None, "journal_mode", &"WAL", |_| Ok(()))?;
+    conn.pragma_update_and_check(None, "journal_mode", "WAL", |_| Ok(()))?;
 
     migrations::migrate(&mut conn)?;
     Ok(AccessLayer::new(conn))

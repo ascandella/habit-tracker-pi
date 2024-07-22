@@ -68,7 +68,7 @@ impl AccessLayer {
     ) -> Result<(), DataAccessError> {
         self.conn.execute(
             "INSERT INTO events (timestamp) VALUES (?1)",
-            [sqlite_datetime(&time)],
+            [sqlite_datetime(time)],
         )?;
         Ok(())
     }
@@ -88,7 +88,7 @@ impl AccessLayer {
     ) -> Result<StreakData, DataAccessError> {
         let fetch_size: u32 = 100;
         let mut streak_alive = true;
-        let mut streak_end = end.clone();
+        let mut streak_end = *end;
         let mut dates = vec![];
 
         while streak_alive {
@@ -131,7 +131,9 @@ impl AccessLayer {
                 }
             }
 
-            dates.last().map(|date| streak_end = *date);
+            if let Some(date) = dates.last() {
+                streak_end = *date
+            }
         }
 
         Ok(StreakData::from(dates))
