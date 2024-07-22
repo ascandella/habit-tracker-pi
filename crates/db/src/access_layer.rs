@@ -81,6 +81,8 @@ impl AccessLayer {
         &self,
         timezone: &impl chrono::TimeZone,
     ) -> Result<StreakData, DataAccessError> {
+        // In case an event was just recorded, we use exclusive date boundaries
+        // in our streak comparison and millisecond precision.
         let now = chrono::Utc::now() + chrono::Duration::seconds(1);
         self.streak_from_time(timezone, &now)
     }
