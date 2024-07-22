@@ -27,6 +27,8 @@ impl From<Vec<chrono::DateTime<chrono::Utc>>> for StreakData {
 
 #[derive(Debug)]
 pub struct Streak {
+    // Stored in reverse order, where the first element of the list has the newest (most
+    // recent) date of the streak. The last element will be the end of the streak.
     times: Vec<chrono::DateTime<chrono::Utc>>,
 }
 
