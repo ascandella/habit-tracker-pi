@@ -129,16 +129,14 @@ mod tests {
     }
 
     #[test]
-    fn test_access_layer() {
-        let mut conn = rusqlite::Connection::open_in_memory().expect("open in-memory");
-        migrations::migrate(&mut conn).expect("migrate");
-        let access_layer = AccessLayer::new(conn);
-        let test_resp = access_layer.record_event();
+    fn test_record_event_ok() {
+        let db = create_access();
+        let test_resp = db.record_event();
         assert!(test_resp.is_ok());
     }
 
     #[test]
-    fn test_sqlite_datetime() {
+    fn test_sqlite_datetime_formatting() {
         let dt: chrono::DateTime<chrono::Utc> = chrono::Utc
             .with_ymd_and_hms(2024, 7, 21, 15, 30, 0)
             .unwrap();
@@ -159,6 +157,7 @@ mod tests {
     fn test_streak_one_day() {
         let db = create_access();
         db.record_event().expect("record event");
+
         let streak = db
             .current_streak(&chrono::Utc)
             .expect("fetch current streak");
