@@ -13,6 +13,7 @@ pub enum DataAccessError {
 }
 
 const FETCH_SIZE: usize = 100;
+type UtcDateTime = chrono::DateTime<chrono::Utc>;
 
 impl AccessLayer {
     pub fn new(conn: rusqlite::Connection) -> Self {
@@ -20,14 +21,11 @@ impl AccessLayer {
     }
 
     pub fn record_event(&self) -> Result<(), DataAccessError> {
-        let now: chrono::DateTime<chrono::Utc> = chrono::Utc::now();
+        let now: UtcDateTime = chrono::Utc::now();
         self.record_event_at(&now)
     }
 
-    pub(crate) fn record_event_at(
-        &self,
-        time: &chrono::DateTime<chrono::Utc>,
-    ) -> Result<(), DataAccessError> {
+    pub(crate) fn record_event_at(&self, time: &UtcDateTime) -> Result<(), DataAccessError> {
         self.conn.execute(
             "INSERT INTO events (timestamp) VALUES (?1)",
             [sqlite_datetime(time)],
@@ -48,7 +46,7 @@ impl AccessLayer {
     fn streak_from_time(
         &self,
         timezone: &impl chrono::TimeZone,
-        end: &chrono::DateTime<chrono::Utc>,
+        end: &UtcDateTime,
     ) -> Result<StreakData, DataAccessError> {
         let mut streak_alive = true;
         let mut streak_end = *end;
@@ -78,7 +76,7 @@ impl AccessLayer {
             }
 
             for timestamp in &rows {
-                let parsed_timestamp = chrono::DateTime::<chrono::Utc>::from(
+                let parsed_timestamp = UtcDateTime::from(
                     chrono::DateTime::parse_from_rfc3339(timestamp)?,
                 );
 
@@ -103,15 +101,15 @@ impl AccessLayer {
 
 fn is_previous_or_same_day(
     timezone: &impl chrono::TimeZone,
-    first: &chrono::DateTime<chrono::Utc>,
-    second: &chrono::DateTime<chrono::Utc>,
+    first: &UtcDateTime,
+    second: &UtcDateTime,
 ) -> bool {
     let first = first.with_timezone(timezone).date_naive();
     let second = second.with_timezone(timezone).date_naive();
     (first - second).abs() <= chrono::TimeDelta::days(1)
 }
 
-fn sqlite_datetime(time: &chrono::DateTime<chrono::Utc>) -> String {
+fn sqlite_datetime(time: &UtcDateTime) -> String {
     time.to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
 }
 
@@ -137,7 +135,7 @@ mod tests {
 
     #[test]
     fn test_sqlite_datetime_formatting() {
-        let dt: chrono::DateTime<chrono::Utc> = chrono::Utc
+        let dt: UtcDateTime = chrono::Utc
             .with_ymd_and_hms(2024, 7, 21, 15, 30, 0)
             .unwrap();
         let time_str = sqlite_datetime(&dt);
@@ -230,7 +228,7 @@ mod tests {
     #[test]
     fn test_is_same_day_timezone() {
         let timezone = chrono_tz::US::Pacific;
-        let dt: chrono::DateTime<chrono::Utc> = chrono::Utc
+        let dt: UtcDateTime = chrono::Utc
             .with_ymd_and_hms(2024, 7, 21, 23, 30, 0)
             .unwrap();
         let yesterday = dt - chrono::Duration::days(1);
