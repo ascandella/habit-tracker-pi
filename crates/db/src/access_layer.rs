@@ -114,23 +114,21 @@ impl AccessLayer {
                         Ok(timestamp)
                     },
                 )?
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .map(|timestamp| {
-                    let res = chrono::DateTime::parse_from_rfc3339(&timestamp)?;
-                    Ok::<_, chrono::ParseError>(chrono::DateTime::<chrono::Utc>::from(res))
-                })
                 .collect::<Result<Vec<_>, _>>()?;
 
             if rows.is_empty() {
                 break;
             }
 
-            for &timestamp in &rows {
+            for timestamp in &rows {
+                let parsed_timestamp = chrono::DateTime::<chrono::Utc>::from(
+                    chrono::DateTime::parse_from_rfc3339(timestamp)?,
+                );
+
                 let end_comparison = dates.first().unwrap_or(&streak_end);
 
-                if is_previous_or_same_day(timezone, &timestamp, end_comparison) {
-                    dates.push(timestamp);
+                if is_previous_or_same_day(timezone, &parsed_timestamp, end_comparison) {
+                    dates.push(parsed_timestamp);
                 } else {
                     streak_alive = false;
                     break;
