@@ -55,6 +55,8 @@ impl Streak {
     }
 }
 
+const FETCH_SIZE: usize = 100;
+
 impl AccessLayer {
     pub fn new(conn: rusqlite::Connection) -> Self {
         Self { conn }
@@ -92,7 +94,6 @@ impl AccessLayer {
         timezone: &impl chrono::TimeZone,
         end: &chrono::DateTime<chrono::Utc>,
     ) -> Result<StreakData, DataAccessError> {
-        let fetch_size: u32 = 100;
         let mut streak_alive = true;
         let mut streak_end = *end;
         let mut dates = vec![];
@@ -108,7 +109,7 @@ impl AccessLayer {
             )?;
             let rows = stmt
                 .query_map(
-                    [sqlite_datetime(&streak_end), fetch_size.to_string()],
+                    [sqlite_datetime(&streak_end), FETCH_SIZE.to_string()],
                     |row| {
                         let timestamp: String = row.get(0)?;
                         Ok(timestamp)
@@ -125,7 +126,7 @@ impl AccessLayer {
                     chrono::DateTime::parse_from_rfc3339(timestamp)?,
                 );
 
-                let end_comparison = dates.first().unwrap_or(&streak_end);
+                let end_comparison = dates.last().unwrap_or(&streak_end);
 
                 if is_previous_or_same_day(timezone, &parsed_timestamp, end_comparison) {
                     dates.push(parsed_timestamp);
@@ -217,15 +218,16 @@ mod tests {
     }
 
     #[test]
-    fn test_streak_two_days() {
+    fn test_streak_three_days() {
         let db = create_access();
         let now = chrono::Utc::now();
         let dates = vec![
             now,
             now - chrono::Duration::days(1),
+            now - chrono::Duration::days(2),
             // Gap here, streak ends
-            now - chrono::Duration::days(3),
             now - chrono::Duration::days(4),
+            now - chrono::Duration::days(5),
         ];
         for date in dates {
             db.record_event_at(&date).expect("record event");
@@ -237,12 +239,34 @@ mod tests {
 
         match streak {
             StreakData::Streak(streak) => {
-                assert_eq!(streak.len(), 2);
+                assert_eq!(streak.len(), 3);
                 assert_eq!(streak.end().date_naive(), now.date_naive());
                 assert_eq!(
                     streak.start().date_naive(),
-                    (now - chrono::Duration::days(1)).date_naive(),
+                    (now - chrono::Duration::days(2)).date_naive(),
                 );
+            }
+            _ => panic!("expected streak"),
+        }
+    }
+
+    #[test]
+    fn test_streak_multiple_queries() {
+        let db = create_access();
+        let now = chrono::Utc::now();
+
+        for days in 0..FETCH_SIZE + 1 {
+            db.record_event_at(&(now - chrono::Duration::days(days as i64)))
+                .expect("record event");
+        }
+
+        let streak = db
+            .current_streak(&chrono::Utc)
+            .expect("fetch current streak");
+
+        match streak {
+            StreakData::Streak(streak) => {
+                assert_eq!(streak.len(), FETCH_SIZE + 1);
             }
             _ => panic!("expected streak"),
         }
