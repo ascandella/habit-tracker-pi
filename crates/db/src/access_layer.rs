@@ -76,9 +76,8 @@ impl AccessLayer {
             }
 
             for timestamp in &rows {
-                let parsed_timestamp = UtcDateTime::from(
-                    chrono::DateTime::parse_from_rfc3339(timestamp)?,
-                );
+                let parsed_timestamp =
+                    UtcDateTime::from(chrono::DateTime::parse_from_rfc3339(timestamp)?);
 
                 let end_comparison = dates.last().unwrap_or(&streak_end);
 
