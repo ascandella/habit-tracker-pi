@@ -40,13 +40,26 @@ impl AccessLayer {
         // In case an event was just recorded, we use exclusive date boundaries
         // in our streak comparison and millisecond precision.
         let upper_bound = chrono::Utc::now() + chrono::Duration::seconds(1);
-        self.streak_from_time(timezone, &upper_bound)
+        self.streak_from_time(timezone, &upper_bound, false)
+    }
+
+    pub fn previous_streak(
+        &self,
+        timezone: &impl chrono::TimeZone,
+        streak_data: &StreakData,
+    ) -> Result<StreakData, DataAccessError> {
+        let upper_bound = match streak_data {
+            StreakData::NoData => &chrono::Utc::now(),
+            StreakData::Streak(streak) => streak.start(),
+        };
+        self.streak_from_time(timezone, &upper_bound, true)
     }
 
     fn streak_from_time(
         &self,
         timezone: &impl chrono::TimeZone,
         end: &UtcDateTime,
+        allow_gap: bool,
     ) -> Result<StreakData, DataAccessError> {
         let mut streak_alive = true;
         let mut streak_end = *end;
@@ -79,13 +92,19 @@ impl AccessLayer {
                 let parsed_timestamp =
                     UtcDateTime::from(chrono::DateTime::parse_from_rfc3339(timestamp)?);
 
-                let end_comparison = dates.last().unwrap_or(&streak_end);
-
-                if is_previous_or_same_day(timezone, &parsed_timestamp, end_comparison) {
+                if allow_gap && dates.is_empty() {
+                    // For "previous streak" logic, just pick the first date we find, no need to
+                    // compare to anything
                     dates.push(parsed_timestamp);
                 } else {
-                    streak_alive = false;
-                    break;
+                    let end_comparison = dates.last().unwrap_or(&streak_end);
+
+                    if is_previous_or_same_day(timezone, &parsed_timestamp, end_comparison) {
+                        dates.push(parsed_timestamp);
+                    } else {
+                        streak_alive = false;
+                        break;
+                    }
                 }
             }
 
@@ -148,6 +167,37 @@ mod tests {
             .current_streak(&chrono::Utc)
             .expect("fetch current streak");
         assert!(matches!(streak, StreakData::NoData));
+        let streak = db
+            .previous_streak(&chrono::Utc, &streak)
+            .expect("fetch previous streak");
+        assert!(matches!(streak, StreakData::NoData));
+    }
+
+    #[test]
+    fn test_streak_few_days_ago() {
+        let db = create_access();
+        let then = chrono::Utc::now() - chrono::Duration::days(3);
+        db.record_event_at(&then).expect("record event");
+        let streak = db
+            .current_streak(&chrono::Utc)
+            .expect("fetch current streak");
+        assert!(matches!(streak, StreakData::NoData));
+
+        let previous_streak = db
+            .previous_streak(&chrono::Utc, &streak)
+            .expect("fetch previous streak");
+
+        match previous_streak {
+            StreakData::Streak(ref streak) => {
+                assert_eq!(streak.len(), 1);
+            }
+            _ => panic!("expected streak"),
+        }
+
+        let previous_streak = db
+            .previous_streak(&chrono::Utc, &previous_streak)
+            .expect("fetch previous streak");
+        assert!(matches!(previous_streak, StreakData::NoData));
     }
 
     #[test]
@@ -190,13 +240,24 @@ mod tests {
             .expect("fetch current streak");
 
         match streak {
-            StreakData::Streak(streak) => {
+            StreakData::Streak(ref streak) => {
                 assert_eq!(streak.len(), 3);
                 assert_eq!(streak.end().date_naive(), now.date_naive());
                 assert_eq!(
                     streak.start().date_naive(),
                     (now - chrono::Duration::days(2)).date_naive(),
                 );
+            }
+            _ => panic!("expected streak"),
+        }
+
+        let previous_streak = db
+            .previous_streak(&chrono::Utc, &streak)
+            .expect("fetch previous streak");
+
+        match previous_streak {
+            StreakData::Streak(ref streak) => {
+                assert_eq!(streak.len(), 2);
             }
             _ => panic!("expected streak"),
         }

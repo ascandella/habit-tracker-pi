@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub enum StreakData {
     NoData,
     Streak(Streak),
