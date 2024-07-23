@@ -2,6 +2,10 @@ use crossbeam_channel::{bounded, select};
 use gpiocdev::line::EdgeDetection;
 use std::error::Error;
 use std::time::Duration;
+use tracing::info;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::EnvFilter;
 
 mod button;
 use button::DebouncedButton;
@@ -13,9 +17,18 @@ const GPIO_BUTTON: u32 = 26;
 // Raspberry pi default GPIO cdev
 const GPIO_CHIP: &str = "/dev/gpiochip0";
 
+fn init_logging() {
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(EnvFilter::from_default_env())
+        .init();
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
+    init_logging();
     let (button_tx, button_rx) = bounded(1);
 
+    info!("Initializing GPIO");
     let pin_req = gpiocdev::Request::builder()
         .on_chip(GPIO_CHIP)
         .with_consumer("workout tracker")

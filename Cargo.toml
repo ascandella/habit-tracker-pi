@@ -9,5 +9,6 @@ resolver = "2"
 chrono = "0.4.38"
 thiserror = "1.0.63"
 tempfile = "3.10.1"
+tracing = "0.1.14"
 
 db = { path = "crates/db" }

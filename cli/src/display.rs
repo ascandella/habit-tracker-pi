@@ -15,6 +15,7 @@ use linux_embedded_hal::{
     spidev::{self, SpidevOptions},
     Delay, SPIError, SpidevDevice,
 };
+use tracing::{debug, info};
 
 pub(crate) struct Display {
     device: Epd2in7<SpidevDevice, InputPin, OutputPin, OutputPin, Delay>,
@@ -91,6 +92,7 @@ impl Display {
     }
 
     pub fn clear_and_shutdown(&mut self) {
+        info!("Clearing screen for shutdown");
         self.clear();
         self.device
             .clear_frame(&mut self.spi, &mut self.delay)
@@ -102,12 +104,14 @@ impl Display {
     }
 
     pub fn wake_up(&mut self) {
+        debug!("Waking screen up");
         self.device
             .wake_up(&mut self.spi, &mut self.delay)
             .expect("Unable to wake")
     }
 
     pub fn sleep(&mut self) -> Result<(), SPIError> {
+        debug!("Putting screen to sleep");
         self.device.sleep(&mut self.spi, &mut self.delay)
     }
 }

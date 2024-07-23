@@ -1,6 +1,7 @@
 use rusqlite::Connection;
 use rusqlite_migration::{Migrations, M};
 
+#[tracing::instrument]
 pub(crate) fn migrate(conn: &mut Connection) -> rusqlite_migration::Result<()> {
     let migrations = Migrations::new(vec![
         M::up(

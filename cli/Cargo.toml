@@ -13,8 +13,10 @@ gpiocdev-embedded-hal = "0.1.1"
 linux-embedded-hal = "0.4.0"
 profont = "0.7.0"
 rusqlite_migration = "1.2.0"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 db = { workspace = true }
+tracing = { workspace = true }
 
 [dependencies.epd-waveshare]
 git = "https://github.com/ascandella/epd-waveshare.git"

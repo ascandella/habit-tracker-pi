@@ -3,6 +3,8 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+use tracing::{debug, error};
+
 pub(crate) struct DebouncedButton {
     tx: crossbeam_channel::Sender<()>,
     duration: Duration,
@@ -19,12 +21,13 @@ impl DebouncedButton {
     }
 
     pub fn pressed(&mut self) {
+        debug!("Button pressed");
         let mut last_press = self.last_press.lock().expect("Unable to acquire mutex");
         let should_fire = match *last_press {
             Some(last_press) => match last_press.elapsed() {
                 Ok(elapsed) => elapsed > self.duration,
                 Err(_) => {
-                    eprintln!("Unable to check elapsed time for debounce");
+                    error!("Unable to check elapsed time for debounce");
                     true
                 }
             },

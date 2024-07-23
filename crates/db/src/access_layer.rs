@@ -1,5 +1,6 @@
 use crate::streak::StreakData;
 
+#[derive(Debug)]
 pub struct AccessLayer {
     conn: rusqlite::Connection,
 }
@@ -55,6 +56,7 @@ impl AccessLayer {
         self.streak_from_time(timezone, upper_bound, true)
     }
 
+    #[tracing::instrument(skip(timezone))]
     fn streak_from_time(
         &self,
         timezone: &impl chrono::TimeZone,
