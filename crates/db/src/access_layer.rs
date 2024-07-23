@@ -52,7 +52,7 @@ impl AccessLayer {
             StreakData::NoData => &chrono::Utc::now(),
             StreakData::Streak(streak) => streak.start(),
         };
-        self.streak_from_time(timezone, &upper_bound, true)
+        self.streak_from_time(timezone, upper_bound, true)
     }
 
     fn streak_from_time(
