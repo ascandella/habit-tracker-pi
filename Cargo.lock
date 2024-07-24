@@ -331,6 +331,7 @@ dependencies = [
  "rusqlite_migration",
  "tracing",
  "tracing-subscriber",
+ "ui",
 ]
 
 [[package]]
@@ -963,6 +964,13 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "ui"
+version = "0.1.0"
+dependencies = [
+ "db",
 ]
 
 [[package]]

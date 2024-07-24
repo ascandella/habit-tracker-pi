@@ -27,7 +27,7 @@ impl Streak {
         Self { times }
     }
 
-    pub fn len(&self) -> usize {
+    pub fn count(&self) -> usize {
         self.times.len()
     }
 

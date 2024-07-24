@@ -191,7 +191,7 @@ mod tests {
 
         match previous_streak {
             StreakData::Streak(ref streak) => {
-                assert_eq!(streak.len(), 1);
+                assert_eq!(streak.count(), 1);
             }
             _ => panic!("expected streak"),
         }
@@ -213,7 +213,7 @@ mod tests {
 
         match streak {
             StreakData::Streak(streak) => {
-                assert_eq!(streak.len(), 1);
+                assert_eq!(streak.count(), 1);
                 assert_eq!(streak.start().date_naive(), chrono::Utc::now().date_naive());
                 assert_eq!(streak.end().date_naive(), chrono::Utc::now().date_naive());
             }
@@ -243,7 +243,7 @@ mod tests {
 
         match streak {
             StreakData::Streak(ref streak) => {
-                assert_eq!(streak.len(), 3);
+                assert_eq!(streak.count(), 3);
                 assert_eq!(streak.end().date_naive(), now.date_naive());
                 assert_eq!(
                     streak.start().date_naive(),
@@ -259,7 +259,7 @@ mod tests {
 
         match previous_streak {
             StreakData::Streak(ref streak) => {
-                assert_eq!(streak.len(), 2);
+                assert_eq!(streak.count(), 2);
             }
             _ => panic!("expected streak"),
         }
@@ -281,7 +281,7 @@ mod tests {
 
         match streak {
             StreakData::Streak(streak) => {
-                assert_eq!(streak.len(), FETCH_SIZE + 1);
+                assert_eq!(streak.count(), FETCH_SIZE + 1);
             }
             _ => panic!("expected streak"),
         }

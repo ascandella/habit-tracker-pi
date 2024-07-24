@@ -2,6 +2,7 @@
 members = [
   "cli",
   "crates/db",
+  "crates/ui",
 ]
 resolver = "2"
 
@@ -12,3 +13,4 @@ tempfile = "3.10.1"
 tracing = "0.1.14"
 
 db = { path = "crates/db" }
+ui = { path = "crates/ui" }

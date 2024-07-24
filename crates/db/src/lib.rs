@@ -6,6 +6,7 @@ pub(crate) mod access_layer;
 pub(crate) mod migrations;
 mod streak;
 pub use access_layer::{AccessLayer, DataAccessError};
+pub use streak::{Streak, StreakData};
 
 #[derive(Error, Debug)]
 pub enum DbError {

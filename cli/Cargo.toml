@@ -17,6 +17,7 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 db = { workspace = true }
 tracing = { workspace = true }
+ui = { workspace = true }
 
 [dependencies.epd-waveshare]
 git = "https://github.com/ascandella/epd-waveshare.git"
