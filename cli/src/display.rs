@@ -143,7 +143,7 @@ impl ui::TrackerDisplay for Display {
             db::StreakData::NoData => "No previous streak".into(),
             db::StreakData::Streak(streak) => {
                 format!(
-                    "Previous: {} {}, ended {}",
+                    "Previous: {} {} @ {}",
                     streak.count(),
                     day_text(streak.count()),
                     streak.end().format("%m/%d/%Y")

@@ -56,7 +56,6 @@ impl AccessLayer {
         self.streak_from_time(timezone, upper_bound, true)
     }
 
-    // TODO: coalesce multiple events on the "same day" into 1 event
     #[tracing::instrument(skip(timezone))]
     fn streak_from_time(
         &self,
@@ -102,7 +101,9 @@ impl AccessLayer {
                 } else {
                     let end_comparison = dates.last().unwrap_or(&streak_end);
 
-                    if is_previous_or_same_day(timezone, &parsed_timestamp, end_comparison) {
+                    let delta = days_between(timezone, &parsed_timestamp, end_comparison);
+
+                    if delta == 1 || (dates.is_empty() && delta == 0) {
                         dates.push(parsed_timestamp);
                     } else {
                         streak_alive = false;
@@ -125,14 +126,14 @@ impl AccessLayer {
     }
 }
 
-fn is_previous_or_same_day(
+fn days_between(
     timezone: &impl chrono::TimeZone,
     first: &UtcDateTime,
     second: &UtcDateTime,
-) -> bool {
+) -> i64 {
     let first = first.with_timezone(timezone).date_naive();
     let second = second.with_timezone(timezone).date_naive();
-    (first - second).abs() <= chrono::TimeDelta::days(1)
+    (first - second).abs().num_days()
 }
 
 fn sqlite_datetime(time: &UtcDateTime) -> String {
@@ -179,6 +180,30 @@ mod tests {
             .previous_streak(&chrono::Utc, &streak)
             .expect("fetch previous streak");
         assert!(matches!(streak, StreakData::NoData));
+    }
+
+    #[test]
+    fn test_streak_multiple_same_day() {
+        let db = create_access();
+
+        let timezone = chrono_tz::US::Pacific;
+        let dt: UtcDateTime = chrono::Utc
+            .with_ymd_and_hms(2024, 7, 21, 23, 30, 0)
+            .unwrap();
+        let earlier = dt - chrono::Duration::seconds(1);
+        db.record_event_at(&dt).expect("record event");
+        db.record_event_at(&earlier).expect("record event");
+
+        let streak = db
+            .streak_from_time(&timezone, &(dt + chrono::Duration::seconds(1)), false)
+            .expect("fetch current streak");
+
+        match streak {
+            StreakData::Streak(ref streak) => {
+                assert_eq!(streak.count(), 1);
+            }
+            _ => panic!("expected streak"),
+        }
     }
 
     #[test]
@@ -300,43 +325,39 @@ mod tests {
             .with_ymd_and_hms(2024, 7, 21, 23, 30, 0)
             .unwrap();
         let yesterday = dt - chrono::Duration::days(1);
-        assert!(is_previous_or_same_day(&timezone, &dt, &dt));
-        assert!(is_previous_or_same_day(&timezone, &dt, &yesterday));
-        assert!(is_previous_or_same_day(&timezone, &yesterday, &dt));
+        assert_eq!(0, days_between(&timezone, &dt, &dt));
+        assert_eq!(1, days_between(&timezone, &dt, &yesterday));
+        assert_eq!(1, days_between(&timezone, &yesterday, &dt));
 
         let beginning_of_previous_day_pacific = chrono::Utc
             .with_ymd_and_hms(2024, 7, 20, 13, 30, 0)
             .unwrap();
 
-        assert!(is_previous_or_same_day(
-            &timezone,
-            &beginning_of_previous_day_pacific,
-            &dt
-        ));
+        assert_eq!(
+            1,
+            days_between(&timezone, &beginning_of_previous_day_pacific, &dt)
+        );
 
         let beginning_of_previous_day_utc =
             chrono::Utc.with_ymd_and_hms(2024, 7, 20, 3, 30, 0).unwrap();
 
-        assert!(!is_previous_or_same_day(
-            &timezone,
-            &beginning_of_previous_day_utc,
-            &dt
-        ));
+        assert_eq!(
+            2,
+            days_between(&timezone, &beginning_of_previous_day_utc, &dt)
+        );
 
         let eod_pacific = chrono::Utc
             .with_ymd_and_hms(2024, 7, 22, 0, 59, 59)
             .unwrap();
         let soprevious_pacific = chrono::Utc.with_ymd_and_hms(2024, 7, 20, 8, 0, 0).unwrap();
 
-        assert!(is_previous_or_same_day(
-            &timezone,
-            &eod_pacific,
-            &soprevious_pacific,
-        ));
-        assert!(!is_previous_or_same_day(
-            &chrono::Utc,
-            &eod_pacific,
-            &soprevious_pacific,
-        ));
+        assert_eq!(
+            1,
+            days_between(&timezone, &eod_pacific, &soprevious_pacific)
+        );
+        assert_eq!(
+            2,
+            days_between(&chrono::Utc, &eod_pacific, &soprevious_pacific)
+        );
     }
 }
