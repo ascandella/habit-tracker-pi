@@ -113,7 +113,7 @@ impl Display {
     }
 }
 
-fn day_text(count: usize) -> &'static str {
+fn day_text(count: i64) -> &'static str {
     match count {
         1 => "day",
         _ => "days",
@@ -121,13 +121,18 @@ fn day_text(count: usize) -> &'static str {
 }
 
 impl ui::TrackerDisplay for Display {
-    fn display_streak(&mut self, current: &db::StreakData, previous: &db::StreakData) {
+    fn display_streak(
+        &mut self,
+        timezone: &impl chrono::TimeZone,
+        current: &db::StreakData,
+        previous: &db::StreakData,
+    ) {
         self.wake_up();
         self.clear();
 
         let current_count = match current {
             db::StreakData::NoData => 0,
-            db::StreakData::Streak(streak) => streak.count(),
+            db::StreakData::Streak(streak) => streak.days(timezone),
         };
         let current_text = format!("{} {}", current_count, day_text(current_count));
 
@@ -145,7 +150,7 @@ impl ui::TrackerDisplay for Display {
                 format!(
                     "Previous: {} {} @ {}",
                     streak.count(),
-                    day_text(streak.count()),
+                    day_text(streak.days(timezone)),
                     streak.end().format("%m/%d/%Y")
                 )
             }

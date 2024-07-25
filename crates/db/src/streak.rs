@@ -31,6 +31,10 @@ impl Streak {
         self.times.len()
     }
 
+    pub fn days(&self, timezone: &impl chrono::TimeZone) -> i64 {
+        super::access_layer::days_between(timezone, self.start(), self.end()) + 1
+    }
+
     pub fn start(&self) -> &chrono::DateTime<chrono::Utc> {
         self.times
             .last()

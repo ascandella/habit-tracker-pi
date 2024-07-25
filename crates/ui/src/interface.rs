@@ -26,7 +26,8 @@ where
         let current = self.db.current_streak(self.timezone)?;
         let previous = self.db.previous_streak(self.timezone, &current)?;
 
-        self.display.display_streak(&current, &previous);
+        self.display
+            .display_streak(self.timezone, &current, &previous);
 
         Ok(())
     }

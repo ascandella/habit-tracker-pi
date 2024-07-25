@@ -5,7 +5,12 @@ pub trait TrackerDisplay {
     fn clear_and_shutdown(&mut self);
 
     /// Display the current and previous streak
-    fn display_streak(&mut self, current: &StreakData, previous: &StreakData);
+    fn display_streak(
+        &mut self,
+        timezone: &impl chrono::TimeZone,
+        current: &StreakData,
+        previous: &StreakData,
+    );
 }
 
 mod button;
