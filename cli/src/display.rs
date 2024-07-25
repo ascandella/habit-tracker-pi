@@ -154,25 +154,36 @@ impl ui::TrackerDisplay for Display {
             &profont::PROFONT_24_POINT,
         );
 
-        let previous_text = match previous {
-            db::StreakData::NoData => "No previous streak".into(),
+        let (previous_text, previous_start) = match previous {
+            db::StreakData::NoData => ("No previous streak".into(), None),
             db::StreakData::Streak(streak) => {
-                format!(
-                    "Previous: {} {} @ {}",
+                let text = format!(
+                    "Previous: {} {}",
                     streak.count(),
                     day_text(streak.days(timezone)),
-                    streak.end().format("%m/%d/%Y")
-                )
+                );
+                let date = Some(streak.end().format("Ended %A, %B %d").to_string());
+                (text, date)
             }
         };
 
-        debug!(previous_text, "Displaying previous streak");
+        debug!(previous_text, previous_start, "Displaying previous streak");
         self.text(
             &previous_text,
             10,
             (self.width() * 3) / 4,
             &profont::PROFONT_12_POINT,
         );
+
+        if let Some(previous_date) = previous_start {
+            self.text(
+                &previous_date,
+                10,
+                // Attempt to put on the bottom
+                self.width() - 12,
+                &profont::PROFONT_12_POINT,
+            );
+        }
 
         self.update();
 
