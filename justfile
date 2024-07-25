@@ -9,7 +9,7 @@ test:
 	cross test --target {{PI_ARCH}}
 
 copy:
-	scp target/{{PI_ARCH}}/release/{{PROJECT_NAME}} aiden@{{PI_IP}}:/home/aiden/{{PROJECT_NAME}}
+	scp target/{{PI_ARCH}}/release/{{PROJECT_NAME}} aiden@{{PI_IP}}:/home/aiden/{{PROJECT_NAME}}/habit-tracker
 
 clippy:
 	cross clippy --target {{PI_ARCH}} --no-deps

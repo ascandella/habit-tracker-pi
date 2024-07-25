@@ -1,0 +1,12 @@
+[Unit]
+Description=Habit Tracker
+After=multi-user.target
+
+[Service]
+WorkingDirectory=/home/aiden/habit-tracker
+Type=simple
+Restart=always
+ExecStart=/home/aiden/habit-tracker/habit-tracker
+
+[Install]
+WantedBy=multi-user.target
