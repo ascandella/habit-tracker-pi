@@ -88,7 +88,9 @@ impl Display {
         // Infallible
         let _ = Text::with_text_style(text, Point::new(x, y), style, text_style)
             .draw(&mut self.display);
+    }
 
+    fn update(&mut self) {
         self.device
             .update_and_display_frame(&mut self.spi, self.display.buffer(), &mut self.delay)
             .expect("Update and display frame error");
@@ -123,22 +125,22 @@ impl ui::TrackerDisplay for Display {
         self.wake_up();
         self.clear();
 
-        let current_text = match current {
-            db::StreakData::NoData => "No current streak".into(),
-            db::StreakData::Streak(streak) => {
-                format!("Streak: {} {}", streak.count(), day_text(streak.count()))
-            }
+        let current_count = match current {
+            db::StreakData::NoData => 0,
+            db::StreakData::Streak(streak) => streak.count(),
         };
+        let current_text = format!("{} {}", current_count, day_text(current_count));
 
+        debug!(current_text, "Displaying current streak");
         self.text(
             &current_text,
-            self.height() / 4,
             10,
+            self.height() / 4,
             &profont::PROFONT_24_POINT,
         );
 
         let previous_text = match previous {
-            db::StreakData::NoData => "No current streak".into(),
+            db::StreakData::NoData => "No previous streak".into(),
             db::StreakData::Streak(streak) => {
                 format!(
                     "Previous: {} {}, ended {}",
@@ -148,17 +150,23 @@ impl ui::TrackerDisplay for Display {
                 )
             }
         };
+
+        debug!(previous_text, "Displaying previous streak");
         self.text(
             &previous_text,
-            (self.height() * 3) / 4,
             10,
+            (self.width() * 3) / 4,
             &profont::PROFONT_12_POINT,
         );
+
+        self.update();
 
         self.sleep().expect("sleep screen");
     }
 
     fn clear_and_shutdown(&mut self) {
+        info!("Waking up for shutdown");
+        self.wake_up();
         info!("Clearing screen for shutdown");
         self.clear();
         self.device

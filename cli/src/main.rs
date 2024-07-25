@@ -2,7 +2,8 @@ use crossbeam_channel::{bounded, select};
 use gpiocdev::line::EdgeDetection;
 use std::error::Error;
 use std::time::Duration;
-use tracing::info;
+use tracing::level_filters::LevelFilter;
+use tracing::{info, warn};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
@@ -15,9 +16,13 @@ const GPIO_BUTTON: u32 = 26;
 const GPIO_CHIP: &str = "/dev/gpiochip0";
 
 fn init_logging() {
+    let env_filter = EnvFilter::builder()
+        .with_default_directive(LevelFilter::INFO.into())
+        .from_env_lossy();
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
-        .with(EnvFilter::from_default_env())
+        .with(env_filter)
         .init();
 }
 
@@ -37,6 +42,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     std::thread::spawn(move || {
         for _event in pin_req.edge_events() {
+            println!("Button pressed in edge events");
             button.pressed();
         }
     });
@@ -47,6 +53,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let eink = Display::new(GPIO_CHIP);
 
+    // TODO: Make file path a parameter
     let db = db::open_file("tracker.db")?;
     let mut interface = ui::HabitInterface::new(eink, db, &chrono_tz::US::Pacific);
 
@@ -59,7 +66,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 interface.button_pressed().expect("unable to handle button press");
             }
             recv(exit_rx) -> _ => {
-                println!("Received control-c. Exiting...");
+                warn!("Received control-c. Exiting...");
                 running = false;
             }
         }

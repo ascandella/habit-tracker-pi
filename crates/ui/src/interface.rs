@@ -1,4 +1,5 @@
 use db::{AccessLayer, DataAccessError};
+use tracing::info;
 
 use crate::TrackerDisplay;
 
@@ -31,11 +32,14 @@ where
     }
 
     pub fn shutdown(mut self) -> Result<(), DataAccessError> {
+        info!("Shutting down interface");
         self.display.clear_and_shutdown();
+        info!("Closing database connection");
         self.db.close()
     }
 
     pub fn button_pressed(&mut self) -> Result<(), DataAccessError> {
+        info!("Button pressed");
         self.db.record_event()?;
         self.refresh_stats()
     }
