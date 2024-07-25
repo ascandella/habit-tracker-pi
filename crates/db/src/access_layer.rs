@@ -87,6 +87,7 @@ impl AccessLayer {
                 .collect::<Result<Vec<_>, _>>()?;
 
             if rows.is_empty() {
+                // Base case: no more rows returned, we're done searching
                 break;
             }
 
@@ -101,21 +102,28 @@ impl AccessLayer {
                 } else {
                     let end_comparison = dates.last().unwrap_or(&streak_end);
 
+                    // If the date we're looking at is the same day as the most recent one
+                    // we found, or exactly 1 day behind (in the provided timezone), the
+                    // streak is alive.
                     if days_between(timezone, &parsed_timestamp, end_comparison) <= 1 {
                         dates.push(parsed_timestamp);
                     } else {
+                        // Otherwise, it's been too long and the streak is broken
                         streak_alive = false;
                         break;
                     }
                 }
             }
 
+            // If we have found a date that's part of the streak, the oldest (end of the
+            // list, aka most recently pushed on) is now the date we're comparing against to
+            // keep the streak alive.
             if let Some(date) = dates.last() {
                 streak_end = *date
             }
         }
 
-        Ok(StreakData::from(dates))
+        Ok(dates.into())
     }
 
     pub fn close(self) -> Result<(), DataAccessError> {
