@@ -117,6 +117,11 @@ impl AccessLayer {
 
         Ok(StreakData::from(dates))
     }
+
+    pub fn close(self) -> Result<(), DataAccessError> {
+        self.conn.close().map_err(|(_, e)| e)?;
+        Ok(())
+    }
 }
 
 fn is_previous_or_same_day(

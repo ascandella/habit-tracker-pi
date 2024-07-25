@@ -318,6 +318,7 @@ dependencies = [
 name = "habit-tracker"
 version = "0.1.0"
 dependencies = [
+ "chrono-tz",
  "crossbeam-channel",
  "ctrlc",
  "db",
@@ -970,6 +971,7 @@ dependencies = [
 name = "ui"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "chrono-tz",
  "crossbeam-channel",
  "db",
