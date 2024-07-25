@@ -25,12 +25,12 @@ pub(crate) struct Display {
 }
 
 impl Display {
-    pub fn new(gpio_chip: &str) -> Self {
-        let busy = InputPin::new(gpio_chip, 24).expect("busy pin");
+    pub fn new(gpio_chip: impl AsRef<std::path::Path>) -> Self {
+        let busy = InputPin::new(gpio_chip.as_ref(), 24).expect("busy pin");
 
-        let dc = OutputPin::new(gpio_chip, 25, PinState::Low).expect("DC pin");
+        let dc = OutputPin::new(gpio_chip.as_ref(), 25, PinState::Low).expect("DC pin");
 
-        let rst = OutputPin::new(gpio_chip, 17, PinState::Low).expect("RST pin");
+        let rst = OutputPin::new(gpio_chip.as_ref(), 17, PinState::Low).expect("RST pin");
 
         let mut spi = SpidevDevice::open("/dev/spidev0.0").expect("spidev directory");
         let options = SpidevOptions::new()
