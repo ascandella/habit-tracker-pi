@@ -302,14 +302,14 @@ mod tests {
 
     #[test]
     fn test_days_between() {
-        let timezone = chrono_tz::US::Pacific;
+        let pacific = chrono_tz::US::Pacific;
         let dt: UtcDateTime = chrono::Utc
             .with_ymd_and_hms(2024, 7, 21, 23, 30, 0)
             .unwrap();
         let yesterday = dt - chrono::Duration::days(1);
-        assert_eq!(0, days_between(&timezone, &dt, &dt));
-        assert_eq!(1, days_between(&timezone, &dt, &yesterday));
-        assert_eq!(1, days_between(&timezone, &yesterday, &dt));
+        assert_eq!(0, days_between(&pacific, &dt, &dt));
+        assert_eq!(1, days_between(&pacific, &dt, &yesterday));
+        assert_eq!(1, days_between(&pacific, &yesterday, &dt));
 
         let beginning_of_previous_day_pacific = chrono::Utc
             .with_ymd_and_hms(2024, 7, 20, 13, 30, 0)
@@ -317,7 +317,7 @@ mod tests {
 
         assert_eq!(
             1,
-            days_between(&timezone, &beginning_of_previous_day_pacific, &dt)
+            days_between(&pacific, &beginning_of_previous_day_pacific, &dt)
         );
 
         let beginning_of_previous_day_utc =
@@ -325,7 +325,7 @@ mod tests {
 
         assert_eq!(
             2,
-            days_between(&timezone, &beginning_of_previous_day_utc, &dt)
+            days_between(&pacific, &beginning_of_previous_day_utc, &dt)
         );
 
         let eod_pacific = chrono::Utc
@@ -333,10 +333,7 @@ mod tests {
             .unwrap();
         let soprevious_pacific = chrono::Utc.with_ymd_and_hms(2024, 7, 20, 8, 0, 0).unwrap();
 
-        assert_eq!(
-            1,
-            days_between(&timezone, &eod_pacific, &soprevious_pacific)
-        );
+        assert_eq!(1, days_between(&pacific, &eod_pacific, &soprevious_pacific));
         assert_eq!(
             2,
             days_between(&chrono::Utc, &eod_pacific, &soprevious_pacific)
