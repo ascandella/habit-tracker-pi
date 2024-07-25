@@ -76,16 +76,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     interface.refresh_stats().expect("refresh stats");
 
     // Go to sleep at midnight
-    let boot_time = chrono::Utc::now();
     let next_sleep = next_midnight(&timezone).expect("next midnight");
     // Wake up at 5am
     let next_wake = next_sleep + chrono::Duration::hours(5);
-    let time_til_midnight = (next_sleep - boot_time)
+    let time_til_midnight = (next_sleep - chrono::Utc::now())
         .to_std()
         .expect("duration until midnight");
-    let time_til_wake = (next_wake - boot_time)
-        .to_std()
-        .expect("duration until first wake");
 
     let (wake_tx, wake_rx) = bounded(1);
     let (sleep_tx, sleep_rx) = bounded(1);
@@ -100,6 +96,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let one_day = chrono::Duration::days(1).to_std().expect("one day");
 
         let sleep_ticker = crossbeam_channel::tick(one_day);
+        let time_til_wake = (next_wake - chrono::Utc::now())
+            .to_std()
+            .expect("duration until first wake");
 
         crossbeam_channel::after(time_til_wake)
             .recv()
