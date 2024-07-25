@@ -70,6 +70,7 @@ impl AccessLayer {
         let mut dates = vec![];
 
         while streak_alive {
+            let mut previous_same_day = false;
             // Return the current streak, based on querying the events table
             let mut stmt = self.conn.prepare(
                 r#"
@@ -110,8 +111,12 @@ impl AccessLayer {
                             delta,
                             %parsed_timestamp, %end_comparison, "Same day, ignoring"
                         );
+                        previous_same_day = true;
                     } else if delta <= 1 {
+                        // Either our date range is empty, in which case today is OK, or the
+                        // date is exactly 1 day ago, in which case the streak is alive
                         dates.push(parsed_timestamp);
+                        previous_same_day = false;
                     } else {
                         streak_alive = false;
                         break;
@@ -121,6 +126,10 @@ impl AccessLayer {
 
             if let Some(date) = dates.last() {
                 streak_end = *date
+            }
+            // We only found more dates on the same day, no need to keep looking
+            if previous_same_day {
+                break;
             }
         }
 
@@ -190,7 +199,7 @@ mod tests {
     }
 
     #[test]
-    fn test_streak_multiple_same_day() {
+    fn test_streak_multiple_same_day_then_next() {
         let db = create_access();
 
         let timezone = chrono_tz::US::Pacific;
@@ -210,6 +219,30 @@ mod tests {
         match streak {
             StreakData::Streak(ref streak) => {
                 assert_eq!(streak.count(), 2);
+            }
+            _ => panic!("expected streak"),
+        }
+    }
+
+    #[test]
+    fn test_streak_multiple_same_day() {
+        let db = create_access();
+
+        let timezone = chrono_tz::US::Pacific;
+        let dt: UtcDateTime = chrono::Utc
+            .with_ymd_and_hms(2024, 7, 21, 23, 30, 0)
+            .unwrap();
+        let earlier = dt - chrono::Duration::seconds(1);
+        db.record_event_at(&dt).expect("record event");
+        db.record_event_at(&earlier).expect("record event");
+
+        let streak = db
+            .streak_from_time(&timezone, &(dt + chrono::Duration::seconds(1)), false)
+            .expect("fetch current streak");
+
+        match streak {
+            StreakData::Streak(ref streak) => {
+                assert_eq!(streak.count(), 1);
             }
             _ => panic!("expected streak"),
         }

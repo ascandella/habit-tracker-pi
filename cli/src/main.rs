@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     init_logging();
     let (button_tx, button_rx) = bounded(1);
 
-    info!("Initializing GPIO for button");
+    info!(pin = GPIO_BUTTON, "Initializing GPIO for button");
     let pin_req = gpiocdev::Request::builder()
         .on_chip(GPIO_CHIP)
         .with_consumer("workout tracker")
@@ -43,7 +43,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     std::thread::spawn(move || {
         for _event in pin_req.edge_events() {
-            println!("Button pressed in edge events");
             button.pressed();
         }
     });
