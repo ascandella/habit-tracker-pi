@@ -67,7 +67,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     while running {
         select! {
             recv(button_rx) -> _ => {
-                if let Err(err) =  interface.button_pressed() {
+                if let Err(err) = interface.button_pressed() {
                     error!(%err, "Error recording event");
                 }
             }
@@ -78,7 +78,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    interface.shutdown().expect("shutdown interface");
+    if let Err(err) = interface.shutdown() {
+        error!(%err, "Error shutting down interface");
+    }
 
     Ok(())
 }
