@@ -1,3 +1,5 @@
+use tracing::debug;
+
 use crate::streak::StreakData;
 
 #[derive(Debug)]
@@ -103,7 +105,12 @@ impl AccessLayer {
 
                     let delta = days_between(timezone, &parsed_timestamp, end_comparison);
 
-                    if delta == 1 || (dates.is_empty() && delta == 0) {
+                    if delta == 0 && !dates.is_empty() {
+                        debug!(
+                            delta,
+                            %parsed_timestamp, %end_comparison, "Same day, ignoring"
+                        );
+                    } else if delta <= 1 {
                         dates.push(parsed_timestamp);
                     } else {
                         streak_alive = false;
@@ -191,8 +198,10 @@ mod tests {
             .with_ymd_and_hms(2024, 7, 21, 23, 30, 0)
             .unwrap();
         let earlier = dt - chrono::Duration::seconds(1);
+        let even_earlier = dt - chrono::Duration::days(1);
         db.record_event_at(&dt).expect("record event");
         db.record_event_at(&earlier).expect("record event");
+        db.record_event_at(&even_earlier).expect("record event");
 
         let streak = db
             .streak_from_time(&timezone, &(dt + chrono::Duration::seconds(1)), false)
@@ -200,7 +209,7 @@ mod tests {
 
         match streak {
             StreakData::Streak(ref streak) => {
-                assert_eq!(streak.count(), 1);
+                assert_eq!(streak.count(), 2);
             }
             _ => panic!("expected streak"),
         }
