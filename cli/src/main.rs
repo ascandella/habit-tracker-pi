@@ -83,6 +83,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Err(err) = interface.shutdown() {
         error!(%err, "Error shutting down interface");
     }
+    info!("Shutdown complete, exiting");
 
     Ok(())
 }
