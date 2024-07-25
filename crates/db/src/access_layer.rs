@@ -301,7 +301,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_same_day_timezone() {
+    fn test_days_between() {
         let timezone = chrono_tz::US::Pacific;
         let dt: UtcDateTime = chrono::Utc
             .with_ymd_and_hms(2024, 7, 21, 23, 30, 0)
