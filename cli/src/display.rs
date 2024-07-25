@@ -60,22 +60,29 @@ impl Display {
         self.device.height()
     }
 
+    #[allow(dead_code)]
     pub fn width(&self) -> u32 {
         self.device.width()
     }
 
-    pub fn text(&mut self, text: &str, x: u32, y: u32) {
+    pub fn text(
+        &mut self,
+        text: &str,
+        x: u32,
+        y: u32,
+        font: &embedded_graphics::mono_font::MonoFont<'_>,
+    ) {
         let x = x.try_into().expect("x out of bounds");
         let y = y.try_into().expect("y out of bounds");
         let style = MonoTextStyleBuilder::new()
-            .font(&profont::PROFONT_24_POINT)
+            .font(font)
             .text_color(Color::Black)
             .background_color(Color::White)
             .build();
 
         let text_style = TextStyleBuilder::new()
-            .baseline(Baseline::Middle)
-            .alignment(Alignment::Center)
+            .baseline(Baseline::Top)
+            .alignment(Alignment::Left)
             .build();
 
         // Infallible
@@ -91,18 +98,6 @@ impl Display {
         self.display.clear(Color::White).expect("Infallible clear");
     }
 
-    pub fn clear_and_shutdown(&mut self) {
-        info!("Clearing screen for shutdown");
-        self.clear();
-        self.device
-            .clear_frame(&mut self.spi, &mut self.delay)
-            .expect("Unable to clear frame");
-        self.device
-            .display_frame(&mut self.spi, &mut self.delay)
-            .expect("Unable to display cleared frame");
-        self.sleep().expect("Unable to sleep");
-    }
-
     pub fn wake_up(&mut self) {
         debug!("Waking screen up");
         self.device
@@ -113,5 +108,65 @@ impl Display {
     pub fn sleep(&mut self) -> Result<(), SPIError> {
         debug!("Putting screen to sleep");
         self.device.sleep(&mut self.spi, &mut self.delay)
+    }
+}
+
+fn day_text(count: usize) -> &'static str {
+    match count {
+        1 => "day",
+        _ => "days",
+    }
+}
+
+impl ui::TrackerDisplay for Display {
+    fn display_streak(&mut self, current: &db::StreakData, previous: &db::StreakData) {
+        self.wake_up();
+        self.clear();
+
+        let current_text = match current {
+            db::StreakData::NoData => "No current streak".into(),
+            db::StreakData::Streak(streak) => {
+                format!("Streak: {} {}", streak.count(), day_text(streak.count()))
+            }
+        };
+
+        self.text(
+            &current_text,
+            self.height() / 4,
+            10,
+            &profont::PROFONT_24_POINT,
+        );
+
+        let previous_text = match previous {
+            db::StreakData::NoData => "No current streak".into(),
+            db::StreakData::Streak(streak) => {
+                format!(
+                    "Previous: {} {}, ended {}",
+                    streak.count(),
+                    day_text(streak.count()),
+                    streak.end().format("%m/%d/%Y")
+                )
+            }
+        };
+        self.text(
+            &previous_text,
+            (self.height() * 3) / 4,
+            10,
+            &profont::PROFONT_12_POINT,
+        );
+
+        self.sleep().expect("sleep screen");
+    }
+
+    fn clear_and_shutdown(&mut self) {
+        info!("Clearing screen for shutdown");
+        self.clear();
+        self.device
+            .clear_frame(&mut self.spi, &mut self.delay)
+            .expect("Unable to clear frame");
+        self.device
+            .display_frame(&mut self.spi, &mut self.delay)
+            .expect("Unable to display cleared frame");
+        self.sleep().expect("Unable to sleep");
     }
 }

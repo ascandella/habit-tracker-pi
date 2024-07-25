@@ -5,7 +5,7 @@ use std::{
 
 use tracing::{debug, error};
 
-pub(crate) struct DebouncedButton {
+pub struct DebouncedButton {
     tx: crossbeam_channel::Sender<()>,
     duration: Duration,
     last_press: Mutex<Option<SystemTime>>,

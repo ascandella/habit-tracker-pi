@@ -8,4 +8,9 @@ pub trait TrackerDisplay {
     fn display_streak(&mut self, current: &StreakData, previous: &StreakData);
 }
 
+mod button;
+mod interface;
+pub use button::DebouncedButton;
+pub use interface::HabitInterface;
+
 // TODO: Implement web-based TrackerDisplay

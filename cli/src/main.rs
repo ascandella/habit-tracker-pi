@@ -6,9 +6,7 @@ use tracing::info;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
-
-mod button;
-use button::DebouncedButton;
+use ui::TrackerDisplay;
 
 mod display;
 use display::Display;
@@ -36,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_edge_detection(EdgeDetection::FallingEdge)
         .request()?;
 
-    let mut button = DebouncedButton::new(button_tx, Duration::from_millis(500));
+    let mut button = ui::DebouncedButton::new(button_tx, Duration::from_millis(500));
 
     std::thread::spawn(move || {
         for _event in pin_req.edge_events() {
@@ -49,7 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel"))?;
 
     let mut display = Display::new(GPIO_CHIP);
-    display.text("Hello, world", display.height() / 2, display.width() / 2);
+    // display.text("Hello, world", display.height() / 2, display.width() / 2);
     display.sleep()?;
 
     let mut running = true;
@@ -58,10 +56,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         select! {
             recv(button_rx) -> _ => {
                 presses += 1;
-                display.wake_up();
-                display.clear();
-                display.text(format!("Presses: {}", presses).as_str(), display.height() / 2, display.width() / 2);
-                display.sleep()?;
+                // display.wake_up();
+                // display.clear();
+                // // display.text(format!("Presses: {}", presses).as_str(), display.height() / 2, display.width() / 2);
+                // display.sleep()?;
             }
             recv(exit_rx) -> _ => {
                 println!("Received control-c. Exiting...");
