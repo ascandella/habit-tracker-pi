@@ -12,7 +12,7 @@ mod display;
 use display::Display;
 
 // TODO: Take as command-line argument or otherwise make configurable
-const GPIO_BUTTON: u32 = 19;
+const GPIO_BUTTON: u32 = 26;
 // Raspberry pi default GPIO cdev
 const GPIO_CHIP: &str = "/dev/gpiochip0";
 
@@ -36,6 +36,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_chip(GPIO_CHIP)
         .with_consumer("workout tracker")
         .with_line(GPIO_BUTTON)
+        .with_bias(gpiocdev::line::Bias::PullUp) // The other end of the button is connected
+        // to ground, pull up to detect easier
         .with_edge_detection(EdgeDetection::FallingEdge)
         .request()?;
 

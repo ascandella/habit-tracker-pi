@@ -21,7 +21,6 @@ impl DebouncedButton {
     }
 
     pub fn pressed(&mut self) {
-        debug!("Button pressed");
         let mut last_press = self.last_press.lock().expect("Unable to acquire mutex");
         let should_fire = match *last_press {
             Some(last_press) => match last_press.elapsed() {
@@ -34,6 +33,7 @@ impl DebouncedButton {
             None => true,
         };
         if should_fire {
+            debug!("Button pressed");
             self.tx
                 .send(())
                 .expect("Unable to send to button-fired channel");
