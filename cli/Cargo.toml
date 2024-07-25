@@ -7,7 +7,7 @@ edition = "2021"
 crossbeam-channel = { workspace = true }
 chrono = { workspace = true }
 chrono-tz = { workspace = true }
-ctrlc = "3.4"
+ctrlc = { version = "3.4", features = ["termination"] }
 embedded-graphics = "0.8.1"
 embedded-hal = "1.0.0"
 gpiocdev = "0.7.1"

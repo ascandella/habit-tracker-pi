@@ -187,7 +187,7 @@ impl ui::TrackerDisplay for Display {
                 &previous_date,
                 10,
                 // Attempt to put on the bottom
-                self.width() - 12,
+                self.width() - 22,
                 &profont::PROFONT_12_POINT,
             );
         }

@@ -7,6 +7,8 @@ WorkingDirectory=/home/aiden/habit-tracker
 Type=simple
 Restart=always
 ExecStart=/home/aiden/habit-tracker/habit-tracker
+User=aiden
+Group=aiden
 
 [Install]
 WantedBy=multi-user.target

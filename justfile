@@ -13,3 +13,11 @@ copy:
 
 clippy:
 	cross clippy --target {{PI_ARCH}} --no-deps
+
+restart:
+	ssh aiden@{{PI_IP}} "sudo systemctl restart {{PROJECT_NAME}}"
+
+stop:
+	ssh aiden@{{PI_IP}} "sudo systemctl stop {{PROJECT_NAME}}"
+
+deploy: stop copy restart
