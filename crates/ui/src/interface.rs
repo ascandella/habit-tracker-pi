@@ -32,6 +32,10 @@ where
         Ok(())
     }
 
+    pub fn sleep(&mut self) {
+        self.display.clear_and_shutdown();
+    }
+
     pub fn shutdown(mut self) -> Result<(), DataAccessError> {
         info!("Shutting down interface");
         self.display.clear_and_shutdown();

@@ -68,15 +68,71 @@ fn main() -> Result<(), Box<dyn Error>> {
     info!("Opening database");
     // TODO: Make file path a parameter
     let db = db::open_file("tracker.db")?;
-    let mut interface = ui::HabitInterface::new(eink, db, &chrono_tz::US::Pacific);
+    // TODO: Make configurable
+    let timezone = chrono_tz::US::Pacific;
+    let mut interface = ui::HabitInterface::new(eink, db, &timezone);
 
     info!("Refreshing initial stats");
     interface.refresh_stats().expect("refresh stats");
 
-    // TODO: Add screen clear / sleep + wake up outside of waking hours to avoid burn-in
+    // Go to sleep at midnight
+    let boot_time = chrono::Utc::now();
+    let next_sleep = next_midnight(&timezone).expect("next midnight");
+    // Wake up at 5am
+    let next_wake = next_sleep + chrono::Duration::hours(5);
+    let time_til_midnight = (next_sleep - boot_time)
+        .to_std()
+        .expect("duration until midnight");
+    let time_til_wake = (next_wake - boot_time)
+        .to_std()
+        .expect("duration until first wake");
+
+    let (wake_tx, wake_rx) = bounded(1);
+    let (sleep_tx, sleep_rx) = bounded(1);
+
+    std::thread::spawn(move || {
+        crossbeam_channel::after(time_til_midnight)
+            .recv()
+            .expect("receive midnight signal");
+
+        sleep_tx.send(()).expect("send to sleep channel");
+
+        let one_day = chrono::Duration::days(1).to_std().expect("one day");
+
+        let sleep_ticker = crossbeam_channel::tick(one_day);
+
+        crossbeam_channel::after(time_til_wake)
+            .recv()
+            .expect("receive midnight signal");
+
+        wake_tx.send(()).expect("send to wake channel");
+        let wake_ticker = crossbeam_channel::tick(one_day);
+
+        loop {
+            select! {
+                recv(sleep_ticker) -> _ => {
+                    sleep_tx.send(()).expect("send to sleep channel");
+                }
+                recv(wake_ticker) -> _ => {
+                    wake_tx.send(()).expect("send to wake channel");
+                }
+            }
+        }
+    });
+
     let mut running = true;
     while running {
         select! {
+            recv(sleep_rx) -> _ => {
+                info!("Received sleep signal");
+                interface.sleep();
+            }
+            recv(wake_rx) -> _ => {
+                info!("Received wakeup signal");
+                if let Err(err) = interface.refresh_stats() {
+                    error!(%err, "Error refreshing stats for wakeup");
+                }
+            }
             recv(button_rx) -> _ => {
                 if let Err(err) = interface.button_pressed() {
                     error!(%err, "Error recording event");
