@@ -56,6 +56,7 @@ impl AccessLayer {
         self.streak_from_time(timezone, upper_bound, true)
     }
 
+    // TODO: coalesce multiple events on the "same day" into 1 event
     #[tracing::instrument(skip(timezone))]
     fn streak_from_time(
         &self,

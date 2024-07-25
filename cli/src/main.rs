@@ -11,7 +11,8 @@ use tracing_subscriber::EnvFilter;
 mod display;
 use display::Display;
 
-const GPIO_BUTTON: u32 = 26;
+// TODO: Take as command-line argument or otherwise make configurable
+const GPIO_BUTTON: u32 = 19;
 // Raspberry pi default GPIO cdev
 const GPIO_CHIP: &str = "/dev/gpiochip0";
 
