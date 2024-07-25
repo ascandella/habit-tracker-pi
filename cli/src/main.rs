@@ -73,15 +73,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut interface = ui::HabitInterface::new(eink, db, &timezone);
 
     info!("Refreshing initial stats");
-    interface.refresh_stats().expect("refresh stats");
+    interface.refresh_stats()?;
 
     // Go to sleep at midnight
     let next_sleep = next_midnight(&timezone).expect("next midnight");
     // Wake up at 5am
     let next_wake = next_sleep + chrono::Duration::hours(5);
-    let time_til_midnight = (next_sleep - chrono::Utc::now())
-        .to_std()
-        .expect("duration until midnight");
+    let time_til_midnight = (next_sleep - chrono::Utc::now()).to_std()?;
 
     let (wake_tx, wake_rx) = bounded(1);
     let (sleep_tx, sleep_rx) = bounded(1);
