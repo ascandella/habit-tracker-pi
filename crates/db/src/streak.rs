@@ -27,20 +27,24 @@ impl Streak {
         Self { times }
     }
 
+    /// Total number of events in the streak. Will always be less than or equal to `days()`
     pub fn count(&self) -> usize {
         self.times.len()
     }
 
+    /// Total number of days the streak was alive for
     pub fn days(&self, timezone: &impl chrono::TimeZone) -> i64 {
         super::access_layer::days_between(timezone, self.start(), self.end()) + 1
     }
 
+    /// When the streak started
     pub fn start(&self) -> &chrono::DateTime<chrono::Utc> {
         self.times
             .last()
             .expect("invariant violation: times must be non-empty")
     }
 
+    /// The last date of the streak
     pub fn end(&self) -> &chrono::DateTime<chrono::Utc> {
         self.times
             .first()
