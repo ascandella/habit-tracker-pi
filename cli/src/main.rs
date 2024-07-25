@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     init_logging();
     let (button_tx, button_rx) = bounded(1);
 
-    info!("Initializing GPIO");
+    info!("Initializing GPIO for button");
     let pin_req = gpiocdev::Request::builder()
         .on_chip(GPIO_CHIP)
         .with_consumer("workout tracker")
@@ -51,14 +51,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     ctrlc::set_handler(move || exit_tx.send(()).expect("Could not send signal on channel"))?;
 
+    info!("Initializing e-ink display");
     let eink = Display::new(GPIO_CHIP);
 
+    info!("Opening database");
     // TODO: Make file path a parameter
     let db = db::open_file("tracker.db")?;
     let mut interface = ui::HabitInterface::new(eink, db, &chrono_tz::US::Pacific);
 
+    info!("Refreshing initial stats");
     interface.refresh_stats().expect("refresh stats");
 
+    // TODO: Add screen clear / sleep + wake up outside of waking hours to avoid burn-in
     let mut running = true;
     while running {
         select! {
