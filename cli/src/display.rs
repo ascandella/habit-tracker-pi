@@ -162,7 +162,14 @@ impl ui::TrackerDisplay for Display {
                     streak.count(),
                     day_text(streak.days(timezone)),
                 );
-                let date = Some(streak.end().format("Ended %A, %B %d").to_string());
+                let date = Some(
+                    streak
+                        .end()
+                        .with_timezone(timezone)
+                        .fixed_offset()
+                        .format("Ended %A, %B %d")
+                        .to_string(),
+                );
                 (text, date)
             }
         };
