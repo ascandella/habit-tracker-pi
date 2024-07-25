@@ -120,8 +120,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
-    let mut running = true;
-    while running {
+    loop {
         select! {
             recv(sleep_rx) -> _ => {
                 info!("Received sleep signal");
@@ -140,7 +139,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             recv(exit_rx) -> _ => {
                 warn!("Received control-c. Exiting...");
-                running = false;
+                break;
             }
         }
     }
