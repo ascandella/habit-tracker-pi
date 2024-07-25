@@ -27,6 +27,15 @@ fn init_logging() {
         .init();
 }
 
+fn next_midnight(tz: &impl chrono::TimeZone) -> Option<chrono::DateTime<chrono::Utc>> {
+    let now = chrono::Utc::now().with_timezone(tz);
+    let midnight = chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap();
+    (now + chrono::Duration::days(1))
+        .with_time(midnight)
+        .single()
+        .map(|dt| dt.to_utc())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     init_logging();
     let (button_tx, button_rx) = bounded(1);
@@ -86,4 +95,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     info!("Shutdown complete, exiting");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::Timelike;
+
+    use super::*;
+
+    #[test]
+    fn test_next_midnight() {
+        let tz = chrono_tz::US::Pacific;
+        let now = chrono::Utc::now();
+        let midnight = next_midnight(&tz).unwrap();
+        assert!(midnight > now);
+        let midnight_local = midnight.with_timezone(&tz);
+        assert_eq!(midnight_local.hour(), 0);
+        assert_eq!(midnight_local.minute(), 0);
+        assert_eq!(midnight_local.second(), 0);
+
+        let delta = midnight - now;
+        assert_eq!(delta.num_days(), 0);
+    }
 }

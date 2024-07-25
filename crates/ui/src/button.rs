@@ -3,7 +3,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use tracing::{debug, error};
+use tracing::error;
 
 pub struct DebouncedButton {
     tx: crossbeam_channel::Sender<()>,
@@ -33,7 +33,6 @@ impl DebouncedButton {
             None => true,
         };
         if should_fire {
-            debug!("Button pressed");
             self.tx
                 .send(())
                 .expect("Unable to send to button-fired channel");
