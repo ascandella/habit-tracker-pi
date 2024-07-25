@@ -3,7 +3,7 @@ use gpiocdev::line::EdgeDetection;
 use std::error::Error;
 use std::time::Duration;
 use tracing::level_filters::LevelFilter;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
@@ -67,7 +67,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     while running {
         select! {
             recv(button_rx) -> _ => {
-                interface.button_pressed().expect("unable to handle button press");
+                if let Err(err) =  interface.button_pressed() {
+                    error!(%err, "Error recording event");
+                }
             }
             recv(exit_rx) -> _ => {
                 warn!("Received control-c. Exiting...");
