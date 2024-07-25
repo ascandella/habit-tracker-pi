@@ -22,15 +22,15 @@ pub(crate) struct Display {
     display: Display2in7,
     spi: SpidevDevice,
     delay: Delay,
+    foreground_color: Color,
+    background_color: Color,
 }
 
 impl Display {
     pub fn new(gpio_chip: impl AsRef<std::path::Path>) -> Self {
-        let busy = InputPin::new(gpio_chip.as_ref(), 24).expect("busy pin");
-
-        let dc = OutputPin::new(gpio_chip.as_ref(), 25, PinState::Low).expect("DC pin");
-
-        let rst = OutputPin::new(gpio_chip.as_ref(), 17, PinState::Low).expect("RST pin");
+        let busy = InputPin::new(&gpio_chip, 24).expect("busy pin");
+        let dc = OutputPin::new(&gpio_chip, 25, PinState::Low).expect("DC pin");
+        let rst = OutputPin::new(&gpio_chip, 17, PinState::Low).expect("RST pin");
 
         let mut spi = SpidevDevice::open("/dev/spidev0.0").expect("spidev directory");
         let options = SpidevOptions::new()
@@ -38,21 +38,29 @@ impl Display {
             .max_speed_hz(4_000_000)
             .mode(spidev::SpiModeFlags::SPI_MODE_0)
             .build();
+
         spi.configure(&options).expect("spi configuration");
 
         let mut delay = Delay {};
-
         let epd2in7 =
             Epd2in7::new(&mut spi, busy, dc, rst, &mut delay, None).expect("eink initalize error");
+
         let mut display = Display2in7::default();
+        // TODO: Make a configuration option
         display.set_rotation(DisplayRotation::Rotate90);
-        display.clear(Color::White).expect("clear screen");
+        // TODO: Make a configuration option
+        let foreground_color = Color::Black;
+        let background_color = Color::White;
+
+        display.clear(background_color).expect("clear screen");
 
         Self {
             display,
             spi,
             delay,
             device: epd2in7,
+            foreground_color,
+            background_color,
         }
     }
 
@@ -76,8 +84,8 @@ impl Display {
         let y = y.try_into().expect("y out of bounds");
         let style = MonoTextStyleBuilder::new()
             .font(font)
-            .text_color(Color::Black)
-            .background_color(Color::White)
+            .text_color(self.foreground_color)
+            .background_color(self.background_color)
             .build();
 
         let text_style = TextStyleBuilder::new()
@@ -97,7 +105,9 @@ impl Display {
     }
 
     pub fn clear(&mut self) {
-        self.display.clear(Color::White).expect("Infallible clear");
+        self.display
+            .clear(self.background_color)
+            .expect("Infallible clear");
     }
 
     pub fn wake_up(&mut self) {
