@@ -73,34 +73,28 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut interface = ui::HabitInterface::new(eink, db, &timezone);
 
     info!("Refreshing initial stats");
-    interface.refresh_stats()?;
+    interface.refresh_stats().expect("refresh stats");
 
     // Go to sleep at midnight
     let next_sleep = next_midnight(&timezone).expect("next midnight");
-    // Wake up at 5am
-    let next_wake = next_sleep + chrono::Duration::hours(5);
-    let time_til_midnight = (next_sleep - chrono::Utc::now()).to_std()?;
 
     let (wake_tx, wake_rx) = bounded(1);
     let (sleep_tx, sleep_rx) = bounded(1);
 
     std::thread::spawn(move || {
-        crossbeam_channel::after(time_til_midnight)
-            .recv()
-            .expect("receive midnight signal");
+        let time_til_midnight = (next_sleep - chrono::Utc::now())
+            .to_std()
+            .expect("duration until midnight");
+        std::thread::sleep(time_til_midnight);
 
         sleep_tx.send(()).expect("send to sleep channel");
 
         let one_day = chrono::Duration::days(1).to_std().expect("one day");
-
         let sleep_ticker = crossbeam_channel::tick(one_day);
-        let time_til_wake = (next_wake - chrono::Utc::now())
-            .to_std()
-            .expect("duration until first wake");
 
-        crossbeam_channel::after(time_til_wake)
-            .recv()
-            .expect("receive midnight signal");
+        // Wake up at 5am
+        let five_hours = std::time::Duration::from_secs(60 * 60 * 5);
+        std::thread::sleep(five_hours);
 
         wake_tx.send(()).expect("send to wake channel");
         let wake_ticker = crossbeam_channel::tick(one_day);
