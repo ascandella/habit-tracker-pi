@@ -47,7 +47,7 @@ impl Display {
 
         let mut display = Display2in7::default();
         // TODO: Make a configuration option
-        display.set_rotation(DisplayRotation::Rotate90);
+        display.set_rotation(DisplayRotation::Rotate270);
         // TODO: Make a configuration option
         let foreground_color = Color::Black;
         let background_color = Color::White;
