@@ -1,8 +1,8 @@
 use crate::streak::StreakData;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AccessLayer {
-    conn: rusqlite::Connection,
+    conn: std::sync::Arc<std::sync::Mutex<rusqlite::Connection>>,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -11,6 +11,8 @@ pub enum DataAccessError {
     SqliteError(#[from] rusqlite::Error),
     #[error("parse date error")]
     ParseDateError(#[from] chrono::ParseError),
+    #[error("lock error")]
+    LockError,
 }
 
 const FETCH_SIZE: usize = 100;
@@ -18,7 +20,9 @@ type UtcDateTime = chrono::DateTime<chrono::Utc>;
 
 impl AccessLayer {
     pub fn new(conn: rusqlite::Connection) -> Self {
-        Self { conn }
+        Self {
+            conn: std::sync::Arc::new(std::sync::Mutex::new(conn)),
+        }
     }
 
     pub fn record_event(&self) -> Result<(), DataAccessError> {
@@ -27,10 +31,13 @@ impl AccessLayer {
     }
 
     pub(crate) fn record_event_at(&self, time: &UtcDateTime) -> Result<(), DataAccessError> {
-        self.conn.execute(
-            "INSERT INTO events (timestamp) VALUES (?1)",
-            [sqlite_datetime(time)],
-        )?;
+        self.conn
+            .lock()
+            .map_err(|_| DataAccessError::LockError)?
+            .execute(
+                "INSERT INTO events (timestamp) VALUES (?1)",
+                [sqlite_datetime(time)],
+            )?;
         Ok(())
     }
 
@@ -67,9 +74,10 @@ impl AccessLayer {
         let mut streak_end = *end;
         let mut dates = vec![];
 
+        let conn = self.conn.lock().map_err(|_| DataAccessError::LockError)?;
         while streak_alive {
             // Return the current streak, based on querying the events table
-            let mut stmt = self.conn.prepare(
+            let mut stmt = conn.prepare(
                 r#"
                     SELECT timestamp FROM events
                     WHERE timestamp < ?1
@@ -127,7 +135,14 @@ impl AccessLayer {
     }
 
     pub fn close(self) -> Result<(), DataAccessError> {
-        self.conn.close().map_err(|(_, e)| e)?;
+        let inner_mutex =
+            std::sync::Arc::into_inner(self.conn).ok_or(DataAccessError::LockError)?;
+
+        inner_mutex
+            .into_inner()
+            .map_err(|_| DataAccessError::LockError)?
+            .close()
+            .map_err(|(_, e)| e)?;
         Ok(())
     }
 }
@@ -277,6 +292,36 @@ mod tests {
             StreakData::Streak(ref streak) => {
                 assert_eq!(streak.count(), 2);
                 assert_eq!(streak.days(&chrono::Utc), 2);
+            }
+            _ => panic!("expected streak"),
+        }
+    }
+
+    #[test]
+    fn test_streak_real_data() {
+        let db = create_access();
+        let times = vec![
+            "2024-07-26T23:40:03.405Z",
+            "2024-07-25T20:36:21.789Z",
+            "2024-07-24T15:03:39.952Z",
+            "2024-07-23T15:03:39.952Z",
+        ];
+        for time in &times {
+            let dt = UtcDateTime::from(chrono::DateTime::parse_from_rfc3339(time).unwrap());
+            db.record_event_at(&dt).expect("record event");
+        }
+        let now = UtcDateTime::from(
+            chrono::DateTime::parse_from_rfc3339("2024-07-26T23:40:04.405Z").unwrap(),
+        );
+        let pacific = chrono_tz::US::Pacific;
+
+        let streak = db
+            .streak_from_time(&pacific, &now, false)
+            .expect("fetch current streak");
+        match streak {
+            StreakData::Streak(ref streak) => {
+                assert_eq!(streak.count(), times.len());
+                assert_eq!(streak.days(&pacific), 4);
             }
             _ => panic!("expected streak"),
         }
