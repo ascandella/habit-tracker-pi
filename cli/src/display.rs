@@ -142,21 +142,39 @@ impl ui::TrackerDisplay for Display {
 
         let current_count = match current {
             db::StreakData::NoData => 0,
-            db::StreakData::Streak(streak) => streak.days(timezone),
+            db::StreakData::Streak(ref streak) => streak.days(timezone),
         };
         let current_text = format!("{} {}", current_count, day_text(current_count));
 
-        debug!(current_text, "Displaying current streak");
+        let x_offset = 10;
+
+        debug!(current_text, ?current, "Displaying current streak");
         self.text(
             &current_text,
-            10,
-            self.height() / 4,
+            x_offset,
+            self.height() / 6,
             &profont::PROFONT_24_POINT,
         );
 
+        match current {
+            db::StreakData::NoData => (),
+            db::StreakData::Streak(ref streak) => {
+                let last_checkin = streak.end().with_timezone(timezone).fixed_offset();
+                let text = format!("Last: {}", last_checkin.format("%A, %b %d"));
+                let y_start = (self.height() / 4) + 10;
+                self.text(&text, x_offset, y_start, &profont::PROFONT_12_POINT);
+                self.text(
+                    &last_checkin.format("@ %H:%M").to_string(),
+                    x_offset,
+                    y_start + 18,
+                    &profont::PROFONT_12_POINT,
+                )
+            }
+        }
+
         let (previous_text, previous_start) = match previous {
             db::StreakData::NoData => ("No previous streak".into(), None),
-            db::StreakData::Streak(streak) => {
+            db::StreakData::Streak(ref streak) => {
                 let text = format!(
                     "Previous: {} {}",
                     streak.count(),
@@ -174,10 +192,15 @@ impl ui::TrackerDisplay for Display {
             }
         };
 
-        debug!(previous_text, previous_start, "Displaying previous streak");
+        debug!(
+            previous_text,
+            previous_start,
+            ?previous,
+            "Displaying previous streak"
+        );
         self.text(
             &previous_text,
-            10,
+            x_offset,
             (self.width() * 3) / 4,
             &profont::PROFONT_12_POINT,
         );
@@ -185,7 +208,7 @@ impl ui::TrackerDisplay for Display {
         if let Some(previous_date) = previous_start {
             self.text(
                 &previous_date,
-                10,
+                x_offset,
                 // Attempt to put on the bottom
                 self.width() - 22,
                 &profont::PROFONT_12_POINT,
