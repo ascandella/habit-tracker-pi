@@ -183,6 +183,29 @@ mod tests {
     }
 
     #[test]
+    fn test_record_event_multiple_threads() {
+        let db = create_access();
+        let cloned = db.clone();
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            cloned.record_event().expect("record event");
+            tx.send(()).expect("send done signal");
+        });
+        rx.recv().expect("receive");
+
+        let streak = db
+            .current_streak(&chrono::Utc)
+            .expect("fetch current streak");
+
+        match streak {
+            StreakData::Streak(streak) => {
+                assert_eq!(streak.count(), 1);
+            }
+            _ => panic!("expected streak"),
+        }
+    }
+
+    #[test]
     fn test_close() {
         let db = create_access();
         assert!(db.close().is_ok());
