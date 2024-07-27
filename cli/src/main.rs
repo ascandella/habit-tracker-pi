@@ -111,6 +111,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
+    let tokio_rt = tokio::runtime::Runtime::new()?;
+    let web_handle = tokio_rt.spawn(async {
+        info!("Hello from Tokio");
+    });
+
     loop {
         select! {
             recv(sleep_rx) -> _ => {
@@ -134,6 +139,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     }
+
+    // TODO: Termination signal to web
 
     if let Err(err) = interface.shutdown() {
         error!(%err, "Error shutting down interface");
