@@ -13,6 +13,8 @@ pub enum DataAccessError {
     ParseDateError(#[from] chrono::ParseError),
     #[error("lock error")]
     LockError,
+    #[error("too many references to drop")]
+    TooManyReferencesToDrop,
 }
 
 const FETCH_SIZE: usize = 100;
@@ -136,8 +138,8 @@ impl AccessLayer {
     }
 
     pub fn close(self) -> Result<(), DataAccessError> {
-        let inner_mutex =
-            std::sync::Arc::into_inner(self.conn).ok_or(DataAccessError::LockError)?;
+        let inner_mutex = std::sync::Arc::into_inner(self.conn)
+            .ok_or(DataAccessError::TooManyReferencesToDrop)?;
 
         inner_mutex
             .into_inner()
@@ -180,6 +182,21 @@ mod tests {
         let db = create_access();
         let test_resp = db.record_event();
         assert!(test_resp.is_ok());
+    }
+
+    #[test]
+    fn test_multiple_closes_error() {
+        let db = create_access();
+        let cloned = db.clone();
+
+        match cloned.close() {
+            Ok(_) => panic!("expected error"),
+            Err(err) => {
+                assert!(matches!(err, DataAccessError::TooManyReferencesToDrop));
+            }
+        }
+
+        assert!(db.close().is_ok());
     }
 
     #[test]
