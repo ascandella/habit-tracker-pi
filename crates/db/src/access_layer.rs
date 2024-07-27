@@ -182,6 +182,12 @@ mod tests {
     }
 
     #[test]
+    fn test_close() {
+        let db = create_access();
+        assert!(db.close().is_ok());
+    }
+
+    #[test]
     fn test_sqlite_datetime_formatting() {
         let dt: UtcDateTime = chrono::Utc
             .with_ymd_and_hms(2024, 7, 21, 15, 30, 0)
