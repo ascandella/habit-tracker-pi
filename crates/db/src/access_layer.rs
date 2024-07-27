@@ -31,13 +31,10 @@ impl AccessLayer {
     }
 
     pub(crate) fn record_event_at(&self, time: &UtcDateTime) -> Result<(), DataAccessError> {
-        self.conn
-            .lock()
-            .map_err(|_| DataAccessError::LockError)?
-            .execute(
-                "INSERT INTO events (timestamp) VALUES (?1)",
-                [sqlite_datetime(time)],
-            )?;
+        self.lock_conn()?.execute(
+            "INSERT INTO events (timestamp) VALUES (?1)",
+            [sqlite_datetime(time)],
+        )?;
         Ok(())
     }
 
@@ -63,6 +60,10 @@ impl AccessLayer {
         self.streak_from_time(timezone, upper_bound, true)
     }
 
+    fn lock_conn(&self) -> Result<std::sync::MutexGuard<rusqlite::Connection>, DataAccessError> {
+        self.conn.lock().map_err(|_| DataAccessError::LockError)
+    }
+
     #[tracing::instrument(skip(self, timezone))]
     fn streak_from_time(
         &self,
@@ -74,8 +75,8 @@ impl AccessLayer {
         let mut streak_end = *end;
         let mut dates = vec![];
 
-        let conn = self.conn.lock().map_err(|_| DataAccessError::LockError)?;
         while streak_alive {
+            let conn = self.lock_conn()?;
             // Return the current streak, based on querying the events table
             let mut stmt = conn.prepare(
                 r#"
