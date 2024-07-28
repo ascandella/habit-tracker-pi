@@ -160,7 +160,7 @@ impl ui::TrackerDisplay for Display {
             db::StreakData::NoData => (),
             db::StreakData::Streak(ref streak) => {
                 let last_checkin = streak.end().with_timezone(timezone).fixed_offset();
-                let text = format!("Last: {}", last_checkin.format("%A, %b %d"));
+                let text = format!("Last: {}", last_checkin.format("%A, %B %d"));
                 let y_start = (self.height() / 4) + 10;
                 self.text(&text, x_offset, y_start, &profont::PROFONT_12_POINT);
                 self.text(
@@ -198,10 +198,11 @@ impl ui::TrackerDisplay for Display {
             ?previous,
             "Displaying previous streak"
         );
+        let previous_y_start = (self.width() * 3) / 4;
         self.text(
             &previous_text,
             x_offset,
-            (self.width() * 3) / 4,
+            previous_y_start,
             &profont::PROFONT_12_POINT,
         );
 
@@ -209,8 +210,7 @@ impl ui::TrackerDisplay for Display {
             self.text(
                 &previous_date,
                 x_offset,
-                // Attempt to put on the bottom
-                self.width() - 22,
+                previous_y_start + 18,
                 &profont::PROFONT_12_POINT,
             );
         }
