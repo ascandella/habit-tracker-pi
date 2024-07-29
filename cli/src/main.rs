@@ -3,7 +3,7 @@ use gpiocdev::line::EdgeDetection;
 use std::error::Error;
 use std::time::Duration;
 use tracing::level_filters::LevelFilter;
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
