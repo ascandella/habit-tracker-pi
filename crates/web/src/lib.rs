@@ -1,7 +1,5 @@
 pub fn router() -> axum::Router {
-    let app = axum::Router::new().route("/", axum::routing::get(|| async { "Hello, World!" }));
-
-    app
+    axum::Router::new().route("/", axum::routing::get(|| async { "Hello, World!" }))
 }
 
 #[cfg(test)]
