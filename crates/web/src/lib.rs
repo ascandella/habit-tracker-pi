@@ -4,7 +4,7 @@ pub fn router(access: db::AccessLayer) -> axum::Router {
         .with_state(access)
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Debug)]
 struct StreakArgs {
     timezone: String,
 }
@@ -29,7 +29,7 @@ impl axum::response::IntoResponse for StreakFetchError {
                 serde_json::json!({"error": "invalid timezone"}),
             ),
             Self::DataAccessError(err) => {
-                tracing::error!(%err, "Data access error in fetch");
+                tracing::error!(%err, "Data access error in API fetch");
                 (
                     axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                     serde_json::json!({"error": format!("data fetch error: {}", err)}),
@@ -40,6 +40,7 @@ impl axum::response::IntoResponse for StreakFetchError {
     }
 }
 
+#[tracing::instrument(skip(access))]
 async fn current_streak(
     axum::extract::State(access): axum::extract::State<db::AccessLayer>,
     options: axum::extract::Query<StreakArgs>,
