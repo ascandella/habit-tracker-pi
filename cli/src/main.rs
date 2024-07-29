@@ -40,10 +40,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     init_logging();
     let (button_tx, button_rx) = bounded(1);
 
-    info!(pin = GPIO_BUTTON, "Initializing GPIO for button");
+    debug!(pin = GPIO_BUTTON, "Initializing GPIO for button");
     let pin_req = gpiocdev::Request::builder()
         .on_chip(GPIO_CHIP)
-        .with_consumer("workout tracker")
+        .with_consumer("habit tracker")
         .with_line(GPIO_BUTTON)
         .with_bias(gpiocdev::line::Bias::PullUp) // The other end of the button is connected
         // to ground, pull up to detect easier
@@ -111,6 +111,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
+    // Yes, I know about #[tokio::main], but since the rest of the code was written pre-async I
+    // wanted to see what it would be like to manually manage a tokio runtime and call that
+    // from a synchronous main.
     let tokio_rt = tokio::runtime::Runtime::new()?;
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(None);
@@ -135,6 +138,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
                 recv(exit_rx) -> _ => {
                     warn!("Received control-c. Exiting...");
+                    // Send a signal to the web async task that it's time to close down
+                    // shop. Will wait for in-flight requests to finish.
                     shutdown_tx.send(Some(())).expect("send shutdown signal");
 
                     if let Err(err) = interface.shutdown() {
