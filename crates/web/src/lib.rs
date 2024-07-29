@@ -16,6 +16,23 @@ struct StreakResponse {
     end: Option<String>,
 }
 
+impl StreakResponse {
+    fn from_timezone(streak: db::StreakData, timezone: &impl chrono::TimeZone) -> Self {
+        match streak {
+            db::StreakData::NoData => StreakResponse {
+                days: None,
+                active: false,
+                end: None,
+            },
+            db::StreakData::Streak(ref streak) => StreakResponse {
+                days: Some(streak.days(timezone) as u32),
+                active: true,
+                end: Some(streak.end().to_rfc3339()),
+            },
+        }
+    }
+}
+
 enum StreakFetchError {
     InvalidTimezone,
     DataAccessError(db::DataAccessError),
@@ -54,19 +71,10 @@ async fn current_streak(
         .current_streak(&timezone)
         .map_err(StreakFetchError::DataAccessError)?;
 
-    let response = match current_streak {
-        db::StreakData::NoData => StreakResponse {
-            days: None,
-            active: false,
-            end: None,
-        },
-        db::StreakData::Streak(ref streak) => StreakResponse {
-            days: Some(streak.days(&timezone) as u32),
-            active: true,
-            end: Some(streak.end().to_rfc3339()),
-        },
-    };
-    Ok(axum::Json(response))
+    Ok(axum::Json(StreakResponse::from_timezone(
+        current_streak,
+        &timezone,
+    )))
 }
 
 #[cfg(test)]
