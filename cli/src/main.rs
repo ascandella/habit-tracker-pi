@@ -70,7 +70,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let db = db::open_file("tracker.db")?;
     // TODO: Make configurable
     let timezone = chrono_tz::US::Pacific;
-    let mut interface = ui::HabitInterface::new(eink, db, &timezone);
+    let mut interface = ui::HabitInterface::new(eink, db.clone(), timezone);
 
     info!("Refreshing initial stats");
     interface.refresh_stats().expect("refresh stats");
@@ -111,36 +111,73 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
-    loop {
-        select! {
-            recv(sleep_rx) -> _ => {
-                info!("Received sleep signal");
-                interface.sleep();
-            }
-            recv(wake_rx) -> _ => {
-                info!("Received wakeup signal");
-                if let Err(err) = interface.refresh_stats() {
-                    error!(%err, "Error refreshing stats for wakeup");
+    let tokio_rt = tokio::runtime::Runtime::new()?;
+
+    let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(None);
+
+    tokio_rt.spawn(async move {
+        loop {
+            select! {
+                recv(sleep_rx) -> _ => {
+                    info!("Received sleep signal");
+                    interface.sleep();
                 }
-            }
-            recv(button_rx) -> _ => {
-                if let Err(err) = interface.button_pressed() {
-                    error!(%err, "Error recording event");
+                recv(wake_rx) -> _ => {
+                    info!("Received wakeup signal");
+                    if let Err(err) = interface.refresh_stats() {
+                        error!(%err, "Error refreshing stats for wakeup");
+                    }
                 }
-            }
-            recv(exit_rx) -> _ => {
-                warn!("Received control-c. Exiting...");
-                break;
+                recv(button_rx) -> _ => {
+                    if let Err(err) = interface.button_pressed() {
+                        error!(%err, "Error recording event");
+                    }
+                }
+                recv(exit_rx) -> _ => {
+                    warn!("Received control-c. Exiting...");
+                    shutdown_tx.send(Some(())).expect("send shutdown signal");
+
+                    if let Err(err) = interface.shutdown() {
+                        error!(%err, "Error shutting down interface");
+                    }
+
+                    break;
+                }
             }
         }
-    }
+    });
 
-    if let Err(err) = interface.shutdown() {
-        error!(%err, "Error shutting down interface");
+    // TODO: Make configurable
+    let http_port = 4124;
+
+    tokio_rt.block_on(async move {
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", http_port))
+            .await
+            .unwrap();
+        let app = web::router();
+        info!(http_port, "Web server listening");
+        if let Err(err) = axum::serve(listener, app)
+            .with_graceful_shutdown(shutdown_signal(shutdown_rx))
+            .await
+        {
+            error!(%err, "Error running server");
+        }
+    });
+
+    if let Err(err) = db.close() {
+        error!(%err, "Error closing DB");
     }
     info!("Shutdown complete, exiting");
 
     Ok(())
+}
+
+async fn shutdown_signal(mut rx: tokio::sync::watch::Receiver<Option<()>>) {
+    loop {
+        if rx.changed().await.is_ok() {
+            return;
+        }
+    }
 }
 
 #[cfg(test)]

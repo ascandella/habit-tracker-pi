@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+axum = { workspace = true }
 crossbeam-channel = { workspace = true }
 chrono = { workspace = true }
 chrono-tz = { workspace = true }
@@ -16,10 +17,12 @@ linux-embedded-hal = "0.4.0"
 profont = "0.7.0"
 rusqlite_migration = "1.2.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tokio = { workspace = true }
 
 db = { workspace = true }
 tracing = { workspace = true }
 ui = { workspace = true }
+web = { workspace = true }
 
 [dependencies.epd-waveshare]
 git = "https://github.com/ascandella/epd-waveshare.git"
