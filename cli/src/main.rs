@@ -147,14 +147,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
-    tokio_rt.block_on(async {
-        // TODO: Make configurable
-        let port = 4124;
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+    // TODO: Make configurable
+    let http_port = 4124;
+
+    tokio_rt.block_on(async move {
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", http_port))
             .await
             .unwrap();
-        let app = axum::Router::new().route("/", axum::routing::get(|| async { "Hello, World!" }));
-        info!(port, "Web server listening");
+        let app = web::router();
+        info!(http_port, "Web server listening");
         if let Err(err) = axum::serve(listener, app)
             .with_graceful_shutdown(shutdown_signal(shutdown_rx))
             .await

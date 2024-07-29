@@ -22,6 +22,7 @@ tokio = { workspace = true }
 db = { workspace = true }
 tracing = { workspace = true }
 ui = { workspace = true }
+web = { workspace = true }
 
 [dependencies.epd-waveshare]
 git = "https://github.com/ascandella/epd-waveshare.git"
