@@ -150,13 +150,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     // TODO: Make configurable
     let http_port = 4124;
 
+    let router = web::router(db.clone());
     tokio_rt.block_on(async move {
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", http_port))
             .await
             .unwrap();
-        let app = web::router();
         info!(http_port, "Web server listening");
-        if let Err(err) = axum::serve(listener, app)
+        if let Err(err) = axum::serve(listener, router)
             .with_graceful_shutdown(shutdown_signal(shutdown_rx))
             .await
         {

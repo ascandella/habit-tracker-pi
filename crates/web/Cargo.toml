@@ -5,9 +5,14 @@ edition = "2021"
 
 [dependencies]
 axum = { workspace = true }
-serde = "1.0.204"
+chrono = { workspace = true }
+chrono-tz = { workspace = true }
+serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.121"
 tokio = { workspace = true }
+tracing = { workspace = true }
+
+db = { workspace = true }
 
 [dev-dependencies]
 http-body-util = "0.1.2"
