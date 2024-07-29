@@ -149,5 +149,6 @@ mod tests {
 
         assert!(response.active);
         assert_eq!(response.days, Some(1));
+        assert!(response.end.is_some());
     }
 }
