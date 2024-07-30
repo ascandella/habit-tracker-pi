@@ -1,12 +1,13 @@
-pub fn router(access: db::AccessLayer) -> axum::Router {
+pub fn router(access: db::AccessLayer, timezone: chrono_tz::Tz) -> axum::Router {
     axum::Router::new()
         .route("/api/current", axum::routing::get(current_streak))
-        .with_state(access)
+        .with_state(AppState { access, timezone })
 }
 
-#[derive(serde::Deserialize, Debug)]
-struct StreakArgs {
-    timezone: String,
+#[derive(Clone, Debug)]
+struct AppState {
+    access: db::AccessLayer,
+    timezone: chrono_tz::Tz,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -34,17 +35,12 @@ impl StreakResponse {
 }
 
 enum StreakFetchError {
-    InvalidTimezone,
     DataAccessError(db::DataAccessError),
 }
 
 impl axum::response::IntoResponse for StreakFetchError {
     fn into_response(self) -> axum::response::Response {
         let (status_code, error) = match self {
-            Self::InvalidTimezone => (
-                axum::http::StatusCode::BAD_REQUEST,
-                serde_json::json!({"error": "invalid timezone"}),
-            ),
             Self::DataAccessError(err) => {
                 tracing::error!(%err, "Data access error in API fetch");
                 (
@@ -57,23 +53,18 @@ impl axum::response::IntoResponse for StreakFetchError {
     }
 }
 
-#[tracing::instrument(skip(access))]
+#[tracing::instrument(skip(app_state))]
 async fn current_streak(
-    axum::extract::State(access): axum::extract::State<db::AccessLayer>,
-    options: axum::extract::Query<StreakArgs>,
+    axum::extract::State(app_state): axum::extract::State<AppState>,
 ) -> axum::response::Result<axum::Json<StreakResponse>> {
-    let timezone: chrono_tz::Tz = options
-        .timezone
-        .parse()
-        .map_err(|_| StreakFetchError::InvalidTimezone)?;
-
-    let current_streak = access
-        .current_streak(&timezone)
+    let current_streak = app_state
+        .access
+        .current_streak(&app_state.timezone)
         .map_err(StreakFetchError::DataAccessError)?;
 
     Ok(axum::Json(StreakResponse::from_timezone(
         current_streak,
-        &timezone,
+        &app_state.timezone,
     )))
 }
 
@@ -90,41 +81,7 @@ mod tests {
     use super::*;
 
     fn create_router() -> Router {
-        router(db::in_memory().expect("in memory create"))
-    }
-
-    #[tokio::test]
-    async fn current_no_timezone() {
-        let app = create_router();
-
-        let response = app
-            .oneshot(
-                Request::builder()
-                    .uri("/api/current")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-    }
-
-    #[tokio::test]
-    async fn current_invalid_timezone() {
-        let app = create_router();
-
-        let response = app
-            .oneshot(
-                Request::builder()
-                    .uri("/api/current?timezone=invalid")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        router(db::in_memory().expect("in memory create"), chrono_tz::UTC)
     }
 
     async fn response_for_query(app: Router, uri: &str) -> StreakResponse {
@@ -140,20 +97,20 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn current_valid_timezone_no_data() {
+    async fn current_no_data() {
         let app = create_router();
-        let response = response_for_query(app, "/api/current?timezone=US/Pacific").await;
+        let response = response_for_query(app, "/api/current").await;
 
         assert!(!response.active);
         assert_eq!(response.days, None);
     }
 
     #[tokio::test]
-    async fn current_valid_timezone_with_data() {
+    async fn current_with_data() {
         let access = db::in_memory().expect("in memory create");
         access.record_event().unwrap();
-        let app = router(access);
-        let response = response_for_query(app, "/api/current?timezone=US/Pacific").await;
+        let app = router(access, chrono_tz::UTC);
+        let response = response_for_query(app, "/api/current").await;
 
         assert!(response.active);
         assert_eq!(response.days, Some(1));
