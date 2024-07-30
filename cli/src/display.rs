@@ -140,11 +140,12 @@ impl ui::TrackerDisplay for Display {
         self.wake_up();
         self.clear();
 
-        let current_count = match current {
-            db::StreakData::NoData => 0,
-            db::StreakData::Streak(ref streak) => streak.days(timezone),
+        let current_text = match current {
+            db::StreakData::NoData => ":(".to_string(),
+            db::StreakData::Streak(ref streak) => {
+                format!("{} {}", current_count, day_text(streak.days(timezone)))
+            }
         };
-        let current_text = format!("{} {}", current_count, day_text(current_count));
 
         let x_offset = 10;
 
