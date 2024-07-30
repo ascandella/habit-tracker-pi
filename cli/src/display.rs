@@ -143,7 +143,8 @@ impl ui::TrackerDisplay for Display {
         let current_text = match current {
             db::StreakData::NoData => ":(".to_string(),
             db::StreakData::Streak(ref streak) => {
-                format!("{} {}", current_count, day_text(streak.days(timezone)))
+                let day_count = streak.days(timezone);
+                format!("{} {}", day_count, day_text(day_count))
             }
         };
 
