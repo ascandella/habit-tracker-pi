@@ -149,6 +149,7 @@ impl ui::TrackerDisplay for Display {
         };
 
         let x_offset = 10;
+        let small_text_line_height = 18;
 
         debug!(current_text, ?current, "Displaying current streak");
         self.text(
@@ -168,7 +169,7 @@ impl ui::TrackerDisplay for Display {
                 self.text(
                     &last_checkin.format("@ %H:%M").to_string(),
                     x_offset,
-                    y_start + 18,
+                    y_start + small_text_line_height,
                     &profont::PROFONT_12_POINT,
                 )
             }
@@ -209,7 +210,7 @@ impl ui::TrackerDisplay for Display {
             self.text(
                 &previous_date,
                 x_offset,
-                previous_y_start + 18,
+                previous_y_start + small_text_line_height,
                 &profont::PROFONT_12_POINT,
             );
         }
