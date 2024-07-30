@@ -177,11 +177,8 @@ impl ui::TrackerDisplay for Display {
         let (previous_text, previous_start) = match previous {
             db::StreakData::NoData => ("No previous streak".into(), None),
             db::StreakData::Streak(ref streak) => {
-                let text = format!(
-                    "Previous: {} {}",
-                    streak.count(),
-                    day_text(streak.days(timezone)),
-                );
+                let days = streak.days(timezone);
+                let text = format!("Previous: {} {}", days, day_text(days),);
                 let date = Some(
                     streak
                         .end()

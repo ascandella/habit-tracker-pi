@@ -345,6 +345,38 @@ mod tests {
     }
 
     #[test]
+    fn gap_in_previous() {
+        let db = create_access();
+        let now = chrono::Utc::now();
+        let times = vec![
+            chrono::Duration::days(1),
+            chrono::Duration::days(2),
+            chrono::Duration::days(8),
+            chrono::Duration::days(9),
+            chrono::Duration::days(10),
+            chrono::Duration::days(12),
+        ];
+        for time in times {
+            db.record_event_at(&(now - time)).expect("record event");
+        }
+
+        let streak = db
+            .streak_from_time(&chrono::Utc, &now, false)
+            .expect("fetch current streak");
+        assert!(matches!(streak, StreakData::Streak(_)));
+
+        match db
+            .previous_streak(&chrono::Utc, &streak)
+            .expect("fetch previous streak")
+        {
+            StreakData::Streak(ref streak) => {
+                assert_eq!(streak.days(&chrono::Utc), 3);
+            }
+            StreakData::NoData => panic!("expected streak"),
+        }
+    }
+
+    #[test]
     fn test_streak_real_data() {
         let db = create_access();
         let times = vec![
