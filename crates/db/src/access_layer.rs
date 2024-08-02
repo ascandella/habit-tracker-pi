@@ -73,11 +73,10 @@ impl AccessLayer {
         end: &UtcDateTime,
         allow_gap: bool,
     ) -> Result<StreakData, DataAccessError> {
-        let mut streak_alive = true;
         let mut streak_end = *end;
         let mut dates = vec![];
 
-        while streak_alive {
+        'outer: loop {
             let conn = self.lock_conn()?;
             // Return the current streak, based on querying the events table
             let mut stmt = conn.prepare(
@@ -119,9 +118,9 @@ impl AccessLayer {
                     if days_between(timezone, &parsed_timestamp, end_comparison) <= 1 {
                         dates.push(parsed_timestamp);
                     } else {
-                        // Otherwise, it's been too long and the streak is broken
-                        streak_alive = false;
-                        break;
+                        // More than 1 day has passed, the streak is no longer alive.
+                        // Break out of the loop and return what we found so far.
+                        break 'outer;
                     }
                 }
             }
