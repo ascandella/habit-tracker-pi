@@ -1,3 +1,5 @@
+use crate::access_layer::days_between;
+
 #[derive(Debug)]
 pub enum StreakData {
     NoData,
@@ -49,5 +51,10 @@ impl Streak {
         self.times
             .first()
             .expect("invariant violation: times must be non-empty")
+    }
+
+    /// Whether or not an activity happened today
+    pub fn active_today(&self, timezone: &impl chrono::TimeZone) -> bool {
+        days_between(timezone, &chrono::Utc::now(), self.end()) == 0
     }
 }

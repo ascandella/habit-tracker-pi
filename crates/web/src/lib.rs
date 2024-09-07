@@ -15,6 +15,7 @@ struct StreakResponse {
     days: Option<u32>,
     active: bool,
     end: Option<String>,
+    active_today: bool,
 }
 
 impl StreakResponse {
@@ -24,11 +25,13 @@ impl StreakResponse {
                 days: None,
                 active: false,
                 end: None,
+                active_today: false,
             },
             db::StreakData::Streak(ref streak) => StreakResponse {
                 days: Some(streak.days(timezone) as u32),
                 active: true,
                 end: Some(streak.end().to_rfc3339()),
+                active_today: streak.active_today(timezone),
             },
         }
     }
@@ -102,6 +105,7 @@ mod tests {
         let response = response_for_query(app, "/api/current").await;
 
         assert!(!response.active);
+        assert!(!response.active_today);
         assert_eq!(response.days, None);
     }
 
@@ -115,5 +119,6 @@ mod tests {
         assert!(response.active);
         assert_eq!(response.days, Some(1));
         assert!(response.end.is_some());
+        assert!(response.active_today);
     }
 }
