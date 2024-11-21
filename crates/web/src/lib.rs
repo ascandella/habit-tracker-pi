@@ -1,6 +1,7 @@
 pub fn router(access: db::AccessLayer, timezone: chrono_tz::Tz) -> axum::Router {
     axum::Router::new()
         .route("/api/current", axum::routing::get(current_streak))
+        .route("/api/record", axum::routing::post(record_event))
         .with_state(AppState { access, timezone })
 }
 
@@ -37,11 +38,11 @@ impl StreakResponse {
     }
 }
 
-enum StreakFetchError {
+enum WebApiError {
     DataAccessError(db::DataAccessError),
 }
 
-impl axum::response::IntoResponse for StreakFetchError {
+impl axum::response::IntoResponse for WebApiError {
     fn into_response(self) -> axum::response::Response {
         let (status_code, error) = match self {
             Self::DataAccessError(err) => {
@@ -56,6 +57,29 @@ impl axum::response::IntoResponse for StreakFetchError {
     }
 }
 
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
+struct RecordEvent {
+    name: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+struct RecordResponse {
+    ok: bool,
+}
+
+#[tracing::instrument(skip(app_state))]
+async fn record_event(
+    axum::extract::State(app_state): axum::extract::State<AppState>,
+    axum::extract::Json(payload): axum::extract::Json<RecordEvent>,
+) -> axum::response::Result<axum::Json<RecordResponse>> {
+    app_state
+        .access
+        .record_event(&payload.name)
+        .map_err(WebApiError::DataAccessError)?;
+
+    Ok(axum::Json(RecordResponse { ok: true }))
+}
+
 #[tracing::instrument(skip(app_state))]
 async fn current_streak(
     axum::extract::State(app_state): axum::extract::State<AppState>,
@@ -63,7 +87,7 @@ async fn current_streak(
     let current_streak = app_state
         .access
         .current_streak(&app_state.timezone)
-        .map_err(StreakFetchError::DataAccessError)?;
+        .map_err(WebApiError::DataAccessError)?;
 
     Ok(axum::Json(StreakResponse::from_timezone(
         current_streak,
@@ -87,22 +111,51 @@ mod tests {
         router(db::in_memory().expect("in memory create"), chrono_tz::UTC)
     }
 
-    async fn response_for_query(app: Router, uri: &str) -> StreakResponse {
+    async fn response_for_record(app: Router, name: &str) -> RecordResponse {
         let response = app
-            .oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/api/record")
+                    .method("POST")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::to_string(&RecordEvent {
+                            name: name.to_string(),
+                        })
+                        .unwrap(),
+                    ))
+                    .unwrap(),
+            )
             .await
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        let streak_response: StreakResponse = serde_json::from_slice(&body).unwrap();
+        let streak_response = serde_json::from_slice(&body).unwrap();
+        streak_response
+    }
+
+    async fn response_for_query(app: Router) -> StreakResponse {
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/current")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let streak_response = serde_json::from_slice(&body).unwrap();
         streak_response
     }
 
     #[tokio::test]
     async fn current_no_data() {
         let app = create_router();
-        let response = response_for_query(app, "/api/current").await;
+        let response = response_for_query(app).await;
 
         assert!(!response.active);
         assert!(!response.active_today);
@@ -112,9 +165,23 @@ mod tests {
     #[tokio::test]
     async fn current_with_data() {
         let access = db::in_memory().expect("in memory create");
-        access.record_event().unwrap();
+        access.record_event("test").unwrap();
         let app = router(access, chrono_tz::UTC);
-        let response = response_for_query(app, "/api/current").await;
+        let response = response_for_query(app).await;
+
+        assert!(response.active);
+        assert_eq!(response.days, Some(1));
+        assert!(response.end.is_some());
+        assert!(response.active_today);
+    }
+
+    #[tokio::test]
+    async fn record_event_and_fetch() {
+        let access = db::in_memory().expect("in memory create");
+        let app = router(access, chrono_tz::UTC);
+        let response = response_for_record(app.clone(), "test event").await;
+        assert!(response.ok);
+        let response = response_for_query(app).await;
 
         assert!(response.active);
         assert_eq!(response.days, Some(1));

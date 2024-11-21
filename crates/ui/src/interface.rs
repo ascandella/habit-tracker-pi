@@ -44,7 +44,7 @@ where
 
     pub fn button_pressed(&mut self) -> Result<(), DataAccessError> {
         info!("Button pressed");
-        self.db.record_event()?;
+        self.db.record_event("button-pressed")?;
         self.refresh_stats()
     }
 }

@@ -13,6 +13,8 @@ pub(crate) fn migrate(conn: &mut Connection) -> rusqlite_migration::Result<()> {
         .down("DROP TABLE events;"),
         M::up("CREATE INDEX idx_events_timestamp ON events (timestamp);")
             .down("DROP INDEX idx_events_timestamp"),
+        M::up("ALTER TABLE events ADD COLUMN name TEXT")
+            .down("ALTER TABLE events DROP COLUMN name"),
     ]);
     migrations.to_latest(conn)
 }

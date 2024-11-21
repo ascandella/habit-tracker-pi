@@ -27,15 +27,19 @@ impl AccessLayer {
         }
     }
 
-    pub fn record_event(&self) -> Result<(), DataAccessError> {
+    pub fn record_event(&self, name: &str) -> Result<(), DataAccessError> {
         let now: UtcDateTime = chrono::Utc::now();
-        self.record_event_at(&now)
+        self.record_event_at(name, &now)
     }
 
-    pub(crate) fn record_event_at(&self, time: &UtcDateTime) -> Result<(), DataAccessError> {
+    pub(crate) fn record_event_at(
+        &self,
+        name: &str,
+        time: &UtcDateTime,
+    ) -> Result<(), DataAccessError> {
         self.lock_conn()?.execute(
-            "INSERT INTO events (timestamp) VALUES (?1)",
-            [sqlite_datetime(time)],
+            "INSERT INTO events (timestamp, name) VALUES (?1, ?2)",
+            [sqlite_datetime(time), name.to_string()],
         )?;
         Ok(())
     }
@@ -179,7 +183,7 @@ mod tests {
     #[test]
     fn test_record_event_ok() {
         let db = create_access();
-        let test_resp = db.record_event();
+        let test_resp = db.record_event("test");
         assert!(test_resp.is_ok());
     }
 
@@ -204,7 +208,7 @@ mod tests {
         let cloned = db.clone();
         let (tx, rx) = std::sync::mpsc::channel();
         std::thread::spawn(move || {
-            cloned.record_event().expect("record event");
+            cloned.record_event("test").expect("record event");
             tx.send(()).expect("send done signal");
         });
         rx.recv().expect("receive");
@@ -253,7 +257,7 @@ mod tests {
     fn test_streak_few_days_ago() {
         let db = create_access();
         let then = chrono::Utc::now() - chrono::Duration::days(3);
-        db.record_event_at(&then).expect("record event");
+        db.record_event_at("test", &then).expect("record event");
         let streak = db
             .current_streak(&chrono::Utc)
             .expect("fetch current streak");
@@ -280,7 +284,7 @@ mod tests {
     #[test]
     fn test_streak_one_day() {
         let db = create_access();
-        db.record_event().expect("record event");
+        db.record_event("test").expect("record event");
 
         let streak = db
             .current_streak(&chrono::Utc)
@@ -310,7 +314,7 @@ mod tests {
             now - chrono::Duration::days(5),
         ];
         for date in dates {
-            db.record_event_at(&date).expect("record event");
+            db.record_event_at("test", &date).expect("record event");
         }
 
         let streak = db
@@ -356,7 +360,8 @@ mod tests {
             chrono::Duration::days(12),
         ];
         for time in times {
-            db.record_event_at(&(now - time)).expect("record event");
+            db.record_event_at("test", &(now - time))
+                .expect("record event");
         }
 
         let streak = db
@@ -386,7 +391,7 @@ mod tests {
         ];
         for time in &times {
             let dt = UtcDateTime::from(chrono::DateTime::parse_from_rfc3339(time).unwrap());
-            db.record_event_at(&dt).expect("record event");
+            db.record_event_at("test", &dt).expect("record event");
         }
         let now = UtcDateTime::from(
             chrono::DateTime::parse_from_rfc3339("2024-07-26T23:40:04.405Z").unwrap(),
@@ -411,7 +416,7 @@ mod tests {
         let now = chrono::Utc::now();
 
         for days in 0..FETCH_SIZE + 1 {
-            db.record_event_at(&(now - chrono::Duration::days(days as i64)))
+            db.record_event_at("test", &(now - chrono::Duration::days(days as i64)))
                 .expect("record event");
         }
 
