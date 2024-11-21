@@ -97,10 +97,10 @@ async fn record_event(
         .record_event(&payload.name)
         .map_err(WebApiError::DataAccessError)?;
 
-    let _ = app_state
+    app_state
         .refresh_sender
         .send(())
-        .map_err(|err| WebApiError::RefreshError(err))?;
+        .map_err(WebApiError::RefreshError)?;
 
     Ok(axum::Json(RecordResponse { ok: true }))
 }
