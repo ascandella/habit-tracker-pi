@@ -1,3 +1,5 @@
+use tracing::info;
+
 pub fn router(
     access: db::AccessLayer,
     refresh_sender: crossbeam_channel::Sender<()>,
@@ -89,6 +91,7 @@ async fn record_event(
     axum::extract::State(app_state): axum::extract::State<AppState>,
     axum::extract::Json(payload): axum::extract::Json<RecordEvent>,
 ) -> axum::response::Result<axum::Json<RecordResponse>> {
+    info!("Recording event via API");
     app_state
         .access
         .record_event(&payload.name)
@@ -106,6 +109,7 @@ async fn record_event(
 async fn current_streak(
     axum::extract::State(app_state): axum::extract::State<AppState>,
 ) -> axum::response::Result<axum::Json<StreakResponse>> {
+    info!("Fetching current streak via API");
     let current_streak = app_state
         .access
         .current_streak(&app_state.timezone)
