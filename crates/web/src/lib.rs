@@ -1,14 +1,23 @@
-pub fn router(access: db::AccessLayer, timezone: chrono_tz::Tz) -> axum::Router {
+pub fn router(
+    access: db::AccessLayer,
+    refresh_sender: crossbeam_channel::Sender<()>,
+    timezone: chrono_tz::Tz,
+) -> axum::Router {
     axum::Router::new()
         .route("/api/current", axum::routing::get(current_streak))
         .route("/api/record", axum::routing::post(record_event))
-        .with_state(AppState { access, timezone })
+        .with_state(AppState {
+            access,
+            timezone,
+            refresh_sender,
+        })
 }
 
 #[derive(Clone, Debug)]
 struct AppState {
     access: db::AccessLayer,
     timezone: chrono_tz::Tz,
+    refresh_sender: crossbeam_channel::Sender<()>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -40,6 +49,7 @@ impl StreakResponse {
 
 enum WebApiError {
     DataAccessError(db::DataAccessError),
+    RefreshError(crossbeam_channel::SendError<()>),
 }
 
 impl axum::response::IntoResponse for WebApiError {
@@ -50,6 +60,13 @@ impl axum::response::IntoResponse for WebApiError {
                 (
                     axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                     serde_json::json!({"error": format!("data fetch error: {}", err)}),
+                )
+            }
+            Self::RefreshError(err) => {
+                tracing::error!(%err, "Refresh error");
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    serde_json::json!({"error": format!("refresh device error: {}", err)}),
                 )
             }
         };
@@ -76,6 +93,11 @@ async fn record_event(
         .access
         .record_event(&payload.name)
         .map_err(WebApiError::DataAccessError)?;
+
+    let _ = app_state
+        .refresh_sender
+        .send(())
+        .map_err(|err| WebApiError::RefreshError(err))?;
 
     Ok(axum::Json(RecordResponse { ok: true }))
 }
@@ -107,8 +129,13 @@ mod tests {
 
     use super::*;
 
-    fn create_router() -> Router {
-        router(db::in_memory().expect("in memory create"), chrono_tz::UTC)
+    fn create_router() -> (Router, db::AccessLayer) {
+        let (tx, rx) = crossbeam_channel::bounded(1);
+        let db = db::in_memory().expect("in memory create");
+        std::thread::spawn(move || {
+            let _ = rx.recv();
+        });
+        (router(db.clone(), tx, chrono_tz::UTC), db)
     }
 
     async fn response_for_record(app: Router, name: &str) -> RecordResponse {
@@ -154,7 +181,7 @@ mod tests {
 
     #[tokio::test]
     async fn current_no_data() {
-        let app = create_router();
+        let (app, _) = create_router();
         let response = response_for_query(app).await;
 
         assert!(!response.active);
@@ -164,9 +191,8 @@ mod tests {
 
     #[tokio::test]
     async fn current_with_data() {
-        let access = db::in_memory().expect("in memory create");
+        let (app, access) = create_router();
         access.record_event("test").unwrap();
-        let app = router(access, chrono_tz::UTC);
         let response = response_for_query(app).await;
 
         assert!(response.active);
@@ -177,8 +203,7 @@ mod tests {
 
     #[tokio::test]
     async fn record_event_and_fetch() {
-        let access = db::in_memory().expect("in memory create");
-        let app = router(access, chrono_tz::UTC);
+        let (app, _) = create_router();
         let response = response_for_record(app.clone(), "test event").await;
         assert!(response.ok);
         let response = response_for_query(app).await;

@@ -81,6 +81,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (wake_tx, wake_rx) = bounded(1);
     let (sleep_tx, sleep_rx) = bounded(1);
 
+    let web_waker_tx = wake_tx.clone();
+
     std::thread::spawn(move || {
         let time_til_midnight = (next_sleep - chrono::Utc::now())
             .to_std()
@@ -155,7 +157,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // TODO: Make configurable
     let http_port = 4124;
 
-    let router = web::router(db.clone(), timezone);
+    let router = web::router(db.clone(), web_waker_tx, timezone);
     tokio_rt.block_on(async move {
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", http_port))
             .await
