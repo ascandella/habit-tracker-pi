@@ -4,10 +4,16 @@ PI_USER := "aiden"
 PROJECT_NAME := "habit-tracker"
 
 build:
-	cross build --target {{PI_ARCH}} --release
+	cross build --target {{PI_ARCH}} --release --color always
+
+t:
+	cross test --target {{PI_ARCH}} --color always
+
+check:
+	cross check --target {{PI_ARCH}} --color always
 
 test:
-	cross test --target {{PI_ARCH}}
+	just build && just clippy
 
 copy:
 	scp target/{{PI_ARCH}}/release/{{PROJECT_NAME}} {{ PI_USER }}@{{PI_IP}}:/home/{{ PI_USER }}/{{PROJECT_NAME}}/habit-tracker

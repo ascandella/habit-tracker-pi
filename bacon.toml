@@ -1,0 +1,8 @@
+[jobs.test]
+command = ["just", "t"]
+
+[jobs.clippy-all]
+command = ["just", "clippy"]
+
+[jobs.check]
+command = ["just", "check"]
