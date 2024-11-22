@@ -2,7 +2,7 @@
 command = ["just", "t"]
 need_stdout = true
 
-[jobs.clippy-all]
+[jobs.clippy]
 command = ["just", "clippy"]
 
 [jobs.check]
