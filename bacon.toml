@@ -1,5 +1,6 @@
 [jobs.test]
 command = ["just", "t"]
+need_stdout = true
 
 [jobs.clippy-all]
 command = ["just", "clippy"]

@@ -13,7 +13,7 @@ check:
 	cross check --target {{PI_ARCH}} --color always
 
 test:
-	just build && just clippy
+	just t && just clippy
 
 copy:
 	scp target/{{PI_ARCH}}/release/{{PROJECT_NAME}} {{ PI_USER }}@{{PI_IP}}:/home/{{ PI_USER }}/{{PROJECT_NAME}}/habit-tracker
