@@ -434,13 +434,13 @@ dependencies = [
 
 [[package]]
 name = "gpiocdev-embedded-hal"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26476d24320fe1b9ebc76392f984abe4a6147844c7e5a69538318f15b026cca8"
+checksum = "af983262d31a1acaec17c949a0bb2a7df7fbdd7ab89c9a6bf6f98a38b25bd690"
 dependencies = [
  "embedded-hal",
  "gpiocdev",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
