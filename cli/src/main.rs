@@ -159,7 +159,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let router = web::router(db.clone(), web_waker_tx, timezone);
     tokio_rt.block_on(async move {
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", http_port))
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{http_port}"))
             .await
             .unwrap();
         info!(http_port, "Web server listening");
