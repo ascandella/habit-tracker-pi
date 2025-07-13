@@ -9,7 +9,7 @@ resolver = "2"
 [workspace.dependencies]
 axum = "0.8.0"
 chrono = "0.4.38"
-chrono-tz = "0.9.0"
+chrono-tz = "0.10.0"
 crossbeam-channel = "0.5.13"
 tempfile = "3.10.1"
 thiserror = "2.0.12"
