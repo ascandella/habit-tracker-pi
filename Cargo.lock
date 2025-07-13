@@ -424,12 +424,12 @@ dependencies = [
 
 [[package]]
 name = "gpiocdev"
-version = "0.7.1"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5119c89eccee09c4f6e9ca2b112aea1cd80bac31cd29169f171a48ae5552d1c"
+checksum = "5ae5319702c7dc34334b9f5e2b73d4ffedb0544675b5931af61b3b13a13f928e"
 dependencies = [
  "gpiocdev-uapi",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -445,14 +445,14 @@ dependencies = [
 
 [[package]]
 name = "gpiocdev-uapi"
-version = "0.6.2"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a02357253f833a6ce4e93f17e8dd3e169c941ea71b83d442ed9c55f784045204"
+checksum = "cbb160ed63d4235176759e49b7e26aa063603ec4547e458ab1ea98483040028c"
 dependencies = [
  "bitflags 2.6.0",
  "ioctl-sys",
  "libc",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
