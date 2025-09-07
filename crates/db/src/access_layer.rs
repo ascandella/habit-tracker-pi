@@ -66,7 +66,9 @@ impl AccessLayer {
         self.streak_from_time(timezone, upper_bound, true)
     }
 
-    fn lock_conn(&self) -> Result<std::sync::MutexGuard<rusqlite::Connection>, DataAccessError> {
+    fn lock_conn(
+        &self,
+    ) -> Result<std::sync::MutexGuard<'_, rusqlite::Connection>, DataAccessError> {
         self.conn.lock().map_err(|_| DataAccessError::LockError)
     }
 
