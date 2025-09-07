@@ -16,7 +16,7 @@ gpiocdev-embedded-hal = "0.1.1"
 linux-embedded-hal = "0.4.0"
 profont = "0.7.0"
 rusqlite_migration = "2.0.0"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 tokio = { workspace = true }
 
 db = { workspace = true }
