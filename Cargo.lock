@@ -395,9 +395,9 @@ dependencies = [
 
 [[package]]
 name = "gpiocdev"
-version = "0.7.3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ae5319702c7dc34334b9f5e2b73d4ffedb0544675b5931af61b3b13a13f928e"
+checksum = "4a6009ef6766dd62a7f5933d379d357ae89eaee4e9c2455b6596f359627660a1"
 dependencies = [
  "gpiocdev-uapi",
  "thiserror 2.0.12",
@@ -405,9 +405,9 @@ dependencies = [
 
 [[package]]
 name = "gpiocdev-embedded-hal"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af983262d31a1acaec17c949a0bb2a7df7fbdd7ab89c9a6bf6f98a38b25bd690"
+checksum = "748efd6eb869726c454f083ca6258dce632d09fadbb8a3fe808b5722b59bbbd5"
 dependencies = [
  "embedded-hal",
  "gpiocdev",
@@ -416,9 +416,9 @@ dependencies = [
 
 [[package]]
 name = "gpiocdev-uapi"
-version = "0.6.4"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbb160ed63d4235176759e49b7e26aa063603ec4547e458ab1ea98483040028c"
+checksum = "cb1a3ace06ef708255a33e738ec7a5e7718fe8e53bd9a39299b4f1cd4b13e9a3"
 dependencies = [
  "bitflags 2.6.0",
  "ioctl-sys",
