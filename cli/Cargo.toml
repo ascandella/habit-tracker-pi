@@ -13,7 +13,7 @@ embedded-graphics = "0.8.1"
 embedded-hal = "1.0.0"
 gpiocdev = "0.8.0"
 gpiocdev-embedded-hal = "0.1.1"
-linux-embedded-hal = "0.4.0"
+linux-embedded-hal = "0.5.0"
 profont = "0.7.0"
 rusqlite_migration = "2.6.0"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
