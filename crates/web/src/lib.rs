@@ -76,6 +76,12 @@ impl axum::response::IntoResponse for WebApiError {
     }
 }
 
+impl axum::response::IntoResponse for Box<WebApiError> {
+    fn into_response(self) -> axum::response::Response {
+        (*self).into_response()
+    }
+}
+
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 struct RecordEvent {
     name: String,
@@ -90,7 +96,7 @@ struct RecordResponse {
 async fn record_event(
     axum::extract::State(app_state): axum::extract::State<AppState>,
     axum::extract::Json(payload): axum::extract::Json<RecordEvent>,
-) -> axum::response::Result<axum::Json<RecordResponse>> {
+) -> axum::response::Result<axum::Json<RecordResponse>, Box<WebApiError>> {
     info!("Recording event via API");
     app_state
         .access
@@ -108,7 +114,7 @@ async fn record_event(
 #[tracing::instrument(skip(app_state))]
 async fn current_streak(
     axum::extract::State(app_state): axum::extract::State<AppState>,
-) -> axum::response::Result<axum::Json<StreakResponse>> {
+) -> axum::response::Result<axum::Json<StreakResponse>, Box<WebApiError>> {
     info!("Fetching current streak via API");
     let current_streak = app_state
         .access
