@@ -5,8 +5,7 @@ edition = "2021"
 
 [dependencies]
 chrono = { workspace = true }
-chrono-tz = { workspace = true }
-rusqlite_migration = "2.6.0"
+rusqlite_migration = "2.9.0"
 thiserror = { workspace = true }
 tracing = { workspace = true }
 
@@ -15,4 +14,5 @@ version = "0.43.0"
 features = ["bundled"]
 
 [dev-dependencies]
+chrono-tz = { workspace = true }
 tempfile = { workspace = true }
